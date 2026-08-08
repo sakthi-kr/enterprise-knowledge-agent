@@ -4,9 +4,9 @@ A Python project for building and evaluating an enterprise knowledge assistant t
 
 ## Current implementation
 
-The repository contains a FastAPI application skeleton, environment-based configuration, automated quality checks, and a reproducible data-preparation pipeline for a local EnterpriseRAG-Bench subset. The pipeline downloads a focused engineering corpus, reads source archives directly, preserves document provenance, creates deterministic overlapping chunks, and derives a benchmark question set that is valid for the local corpus.
+The repository contains a FastAPI application skeleton, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, and a dense-vector retrieval baseline. The retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs.
 
-Retrieval, knowledge-graph construction, agent orchestration, and model-based evaluation are not implemented yet.
+Grounded answer generation, knowledge-graph construction, agent orchestration, and model-based evaluation are not implemented yet.
 
 ## Development
 
@@ -41,4 +41,32 @@ Then normalize the documents, create deterministic overlapping chunks, and selec
 python -m enterprise_knowledge_agent.data_pipeline
 ```
 
-Generated files are written to `data/processed/enterprise_rag_bench/` and are excluded from Git.
+Generated corpus files are written to `data/processed/enterprise_rag_bench/` and are excluded from Git.
+
+## Build and evaluate vector retrieval
+
+Start the local Qdrant service:
+
+```bash
+docker compose up -d qdrant
+```
+
+Build a fresh dense-vector index from the prepared chunks:
+
+```bash
+python -m enterprise_knowledge_agent.vector_index --recreate
+```
+
+Search it directly:
+
+```bash
+python -m enterprise_knowledge_agent.vector_search "What caused the API gateway incident?"
+```
+
+Evaluate retrieval against benchmark document IDs:
+
+```bash
+python -m enterprise_knowledge_agent.retrieval_evaluation
+```
+
+Small experiment outputs are written to `artifacts/retrieval/`.

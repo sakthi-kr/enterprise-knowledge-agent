@@ -1,0 +1,10 @@
+{
+  "collection_name": "enterprise_knowledge_chunks",
+  "distance": "Cosine",
+  "elapsed_seconds": 9651.531,
+  "embedding_dimension": 384,
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "indexed_chunk_count": 62316,
+  "stored_point_count": 62316,
+  "upload_batch_size": 64
+}
