@@ -20,6 +20,10 @@ htmlcov/
 .env.*
 !.env.example
 
+# Local benchmark data and generated artifacts
+data/raw/
+data/processed/
+
 # IDEs
 .idea/
 .vscode/
