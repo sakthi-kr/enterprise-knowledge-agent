@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dimension: int = 384
     embedding_batch_size: int = 64
+    gemini_api_key: str | None = None
+    gemini_model: str = "gemini-3.6-flash"
+    gemini_base_url: str = "https://generativelanguage.googleapis.com"
+    gemini_timeout_seconds: float = 60.0
+    rag_retrieval_candidates: int = 12
+    rag_context_sources: int = 6
+    rag_max_chunks_per_document: int = 2
+    rag_max_context_characters: int = 18000
 
     model_config = SettingsConfigDict(
         env_file=".env",

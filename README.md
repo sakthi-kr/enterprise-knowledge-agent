@@ -4,9 +4,11 @@ A Python project for building and evaluating an enterprise knowledge assistant t
 
 ## Current implementation
 
-The repository contains a FastAPI application skeleton, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, and a dense-vector retrieval baseline. The retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs.
+The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, a dense-vector retrieval baseline, and grounded answer generation over retrieved enterprise evidence.
 
-Grounded answer generation, knowledge-graph construction, agent orchestration, and model-based evaluation are not implemented yet.
+The retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs. Grounded answers use a Gemini provider adapter with structured output, validated source IDs, inline citations, and an explicit insufficient-evidence outcome.
+
+Knowledge-graph construction, agent orchestration, and model-based evaluation are not implemented yet.
 
 ## Development
 
@@ -70,3 +72,23 @@ python -m enterprise_knowledge_agent.retrieval_evaluation
 ```
 
 Small experiment outputs are written to `artifacts/retrieval/`.
+
+## Ask grounded questions
+
+Copy `.env.example` to `.env` and set `EKA_GEMINI_API_KEY` to a Gemini API key. The `.env` file is excluded from Git.
+
+Ask a question from the command line:
+
+```bash
+python -m enterprise_knowledge_agent.rag_query "What caused the API gateway autoscaler incident?"
+```
+
+Or start the API and send a request to `POST /ask`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What caused the API gateway autoscaler incident?"}'
+```
+
+The response includes an answer status, validated citations with source provenance, retrieval counts, model name, and provider token usage.
