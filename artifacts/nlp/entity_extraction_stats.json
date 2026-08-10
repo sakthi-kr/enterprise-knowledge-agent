@@ -1,0 +1,55 @@
+{
+  "batch_size": 8,
+  "canonical_entities_by_type": {
+    "organization": 3760,
+    "person": 1552,
+    "project": 4426,
+    "repository": 10590,
+    "service": 18009,
+    "team": 2701,
+    "technology": 6749
+  },
+  "canonical_entity_count": 47787,
+  "confidence_threshold": 0.65,
+  "documents_with_entities": 19304,
+  "elapsed_seconds": 32790.925,
+  "entity_descriptions": {
+    "organization": "Specific named companies, vendors, customers, or legal organizations. Exclude internal teams and generic departments.",
+    "person": "Specific named people. Exclude job titles, roles, teams, and generic groups.",
+    "project": "Specific named projects, programs, initiatives, or launches. Exclude generic work activities and planning terms.",
+    "repository": "Specific named source-code repositories or repository identifiers. Exclude generic mentions of code or repositories.",
+    "service": "Specific named deployed services, applications, APIs, platforms, or system components. Exclude generic technical concepts, symptoms, and failure descriptions.",
+    "team": "Specific named internal teams, squads, or working groups. Exclude generic roles and unnamed groups.",
+    "technology": "Specific named technologies, frameworks, databases, protocols, cloud products, tools, or software products. Exclude generic technical phrases."
+  },
+  "entity_mention_count": 121714,
+  "entity_mentions_by_type": {
+    "organization": 12992,
+    "person": 5056,
+    "project": 6396,
+    "repository": 12637,
+    "service": 37603,
+    "team": 10134,
+    "technology": 36896
+  },
+  "entity_types": [
+    "person",
+    "organization",
+    "team",
+    "project",
+    "service",
+    "technology",
+    "repository"
+  ],
+  "max_input_characters": 1800,
+  "model_name": "fastino/gliner2-base-v1",
+  "processed_document_count": 19361,
+  "sample_per_source": null,
+  "selection_limit": null,
+  "source_document_counts": {
+    "confluence": 5189,
+    "github": 8052,
+    "jira": 6120
+  },
+  "truncated_document_count": 19193
+}

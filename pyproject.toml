@@ -20,6 +20,9 @@ dev = [
     "pytest==9.0.2",
     "ruff==0.15.22",
 ]
+nlp = [
+    "gliner2[local]==1.3.2",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

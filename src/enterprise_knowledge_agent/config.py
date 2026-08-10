@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     rag_context_sources: int = 6
     rag_max_chunks_per_document: int = 2
     rag_max_context_characters: int = 18000
+    nlp_model: str = "fastino/gliner2-base-v1"
+    nlp_batch_size: int = 8
+    nlp_confidence_threshold: float = 0.65
+    nlp_max_input_characters: int = 1800
 
     model_config = SettingsConfigDict(
         env_file=".env",

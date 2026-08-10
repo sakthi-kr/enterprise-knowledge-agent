@@ -18,9 +18,15 @@ data/
         ├── documents.jsonl
         ├── chunks.jsonl
         ├── benchmark_questions.jsonl
-        └── corpus_stats.json
+        ├── corpus_stats.json
+        └── entities/
+            ├── entity_mentions.jsonl
+            ├── entities.jsonl
+            └── entity_extraction_stats.json
 ```
 
 `documents.jsonl` preserves both the benchmark `doc_id` and a stable `record_id` for each physical source document. This distinction matters because the released source archives contain a small number of conflicting records that share a benchmark document ID. Those records are retained rather than silently discarded.
 
 `chunks.jsonl` contains deterministic overlapping text windows with stable UUID chunk identifiers and source provenance. Benchmark questions are retained only when their expected evidence is present and unambiguous in the local corpus, along with information-not-found questions that remain valid for a subset corpus. Questions whose expected document IDs collide across different source records are excluded from the local evaluation set and reported in `corpus_stats.json`.
+
+`entity_mentions.jsonl` stores model-extracted mentions with document provenance, confidence scores, character spans, and stable canonical entity IDs. `entities.jsonl` aggregates aliases that normalize to the same typed entity while preserving mention counts and source coverage. The extraction input is bounded per document so local CPU inference remains practical; the configured limit is recorded in the generated statistics.

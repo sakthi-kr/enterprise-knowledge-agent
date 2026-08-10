@@ -4,11 +4,13 @@ A Python project for building and evaluating an enterprise knowledge assistant t
 
 ## Current implementation
 
-The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, a dense-vector retrieval baseline, and grounded answer generation over retrieved enterprise evidence.
+The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, a dense-vector retrieval baseline, grounded answer generation, and local enterprise entity extraction.
 
-The retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs. Grounded answers use a Gemini provider adapter with structured output, validated source IDs, inline citations, and an explicit insufficient-evidence outcome.
+The retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs. Grounded answers use a Gemini provider adapter with structured output, validated inline citations, insufficient-evidence handling, and retry logic for transient provider failures.
 
-Knowledge-graph construction, agent orchestration, and model-based evaluation are not implemented yet.
+Entity extraction uses a local GLiNER2 model with descriptive labels to identify stable named enterprise entities such as people, organizations, teams, projects, services, technologies, and repositories. Entity mentions are normalized into stable canonical IDs before graph construction.
+
+Knowledge-graph storage, graph retrieval, agent orchestration, and model-based evaluation are not implemented yet.
 
 ## Development
 
@@ -92,3 +94,19 @@ curl -X POST http://127.0.0.1:8000/ask \
 ```
 
 The response includes an answer status, validated citations with source provenance, retrieval counts, model name, and provider token usage.
+
+## Extract enterprise entities
+
+Install the optional local NLP dependencies:
+
+```bash
+python -m pip install -e ".[dev,nlp]"
+```
+
+Run local entity extraction over the prepared enterprise documents:
+
+```bash
+python -m enterprise_knowledge_agent.entity_extraction
+```
+
+Document-level mentions, canonical entities, and extraction statistics are written under `data/processed/enterprise_rag_bench/entities/`. The full generated records remain excluded from Git, while the small extraction summary is copied to `artifacts/nlp/`.
