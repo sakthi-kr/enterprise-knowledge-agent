@@ -1,0 +1,152 @@
+{
+  "constraints": [
+    "eka_document_record_id",
+    "eka_entity_entity_id"
+  ],
+  "cooccurrence_relationship_count": 331933,
+  "document_count": 19361,
+  "entity_count": 47787,
+  "indexes": [
+    "eka_document_doc_id",
+    "eka_document_record_id",
+    "eka_document_source_type",
+    "eka_entity_entity_id",
+    "eka_entity_normalized_key",
+    "eka_entity_type"
+  ],
+  "mention_relationship_count": 121030,
+  "top_cooccurrences": [
+    {
+      "document_count": 540,
+      "source_entity_id": "1e69a800-2eb0-5011-b7c3-d83abbc1f3d5",
+      "source_name": "Go",
+      "target_entity_id": "e793084b-0c97-5c99-9336-a0ff37aab01c",
+      "target_name": "Python"
+    },
+    {
+      "document_count": 381,
+      "source_entity_id": "1d02bf98-707d-50da-85e7-04a3e76865e3",
+      "source_name": "TypeScript",
+      "target_entity_id": "e793084b-0c97-5c99-9336-a0ff37aab01c",
+      "target_name": "Python"
+    },
+    {
+      "document_count": 330,
+      "source_entity_id": "1d02bf98-707d-50da-85e7-04a3e76865e3",
+      "source_name": "TypeScript",
+      "target_entity_id": "1e69a800-2eb0-5011-b7c3-d83abbc1f3d5",
+      "target_name": "Go"
+    },
+    {
+      "document_count": 232,
+      "source_entity_id": "be65ca1a-974d-5e07-8dcc-0283d492fc00",
+      "source_name": "TS",
+      "target_entity_id": "e793084b-0c97-5c99-9336-a0ff37aab01c",
+      "target_name": "Python"
+    },
+    {
+      "document_count": 230,
+      "source_entity_id": "1e69a800-2eb0-5011-b7c3-d83abbc1f3d5",
+      "source_name": "Go",
+      "target_entity_id": "be65ca1a-974d-5e07-8dcc-0283d492fc00",
+      "target_name": "TS"
+    },
+    {
+      "document_count": 168,
+      "source_entity_id": "17778ad4-c5f2-55cc-82d6-0058631a02e9",
+      "source_name": "Redwood",
+      "target_entity_id": "d616b7f5-ecf8-5f91-9a0f-e8db5778a62e",
+      "target_name": "GPU"
+    },
+    {
+      "document_count": 162,
+      "source_entity_id": "0268ab4b-2df4-554a-a2ca-2204e6975d7f",
+      "source_name": "Customer",
+      "target_entity_id": "0925e3bc-2afe-519e-af1d-4812f9e9b32e",
+      "target_name": "Customer"
+    },
+    {
+      "document_count": 137,
+      "source_entity_id": "68548150-fd02-5ea7-b6b9-77d6ec98bb50",
+      "source_name": "Terraform",
+      "target_entity_id": "b59e719c-d975-58e6-a538-a56d3c5d8ae0",
+      "target_name": "Helm"
+    },
+    {
+      "document_count": 136,
+      "source_entity_id": "0bbed7ea-527d-540f-8b65-563b796120c2",
+      "source_name": "OpenAI",
+      "target_entity_id": "57a638c1-95aa-5454-b079-e26ff1d49c3d",
+      "target_name": "JSON"
+    },
+    {
+      "document_count": 136,
+      "source_entity_id": "17778ad4-c5f2-55cc-82d6-0058631a02e9",
+      "source_name": "Redwood",
+      "target_entity_id": "2e16f366-ec0e-5449-966b-2c7245245ad5",
+      "target_name": "SREs"
+    }
+  ],
+  "top_entities": [
+    {
+      "display_name": "Redwood",
+      "document_count": 2071,
+      "entity_id": "17778ad4-c5f2-55cc-82d6-0058631a02e9",
+      "entity_type": "organization"
+    },
+    {
+      "display_name": "GPU",
+      "document_count": 1242,
+      "entity_id": "d616b7f5-ecf8-5f91-9a0f-e8db5778a62e",
+      "entity_type": "technology"
+    },
+    {
+      "display_name": "JSON",
+      "document_count": 1141,
+      "entity_id": "57a638c1-95aa-5454-b079-e26ff1d49c3d",
+      "entity_type": "technology"
+    },
+    {
+      "display_name": "PR",
+      "document_count": 947,
+      "entity_id": "859c8a4c-26c3-5653-b50b-92a75930c9b8",
+      "entity_type": "project"
+    },
+    {
+      "display_name": "Python",
+      "document_count": 818,
+      "entity_id": "e793084b-0c97-5c99-9336-a0ff37aab01c",
+      "entity_type": "technology"
+    },
+    {
+      "display_name": "Go",
+      "document_count": 803,
+      "entity_id": "1e69a800-2eb0-5011-b7c3-d83abbc1f3d5",
+      "entity_type": "technology"
+    },
+    {
+      "display_name": "SRE",
+      "document_count": 738,
+      "entity_id": "6c34824d-7c4e-54a2-be3e-932ee3b4e4e5",
+      "entity_type": "team"
+    },
+    {
+      "display_name": "API gateway",
+      "document_count": 723,
+      "entity_id": "d330d2b3-76ac-55c1-b5de-e8b3ee09388c",
+      "entity_type": "service"
+    },
+    {
+      "display_name": "Terraform",
+      "document_count": 688,
+      "entity_id": "68548150-fd02-5ea7-b6b9-77d6ec98bb50",
+      "entity_type": "technology"
+    },
+    {
+      "display_name": "SLO",
+      "document_count": 656,
+      "entity_id": "7eab3e92-8887-5037-88ff-6e9706c3b521",
+      "entity_type": "technology"
+    }
+  ]
+}

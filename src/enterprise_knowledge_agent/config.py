@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     nlp_batch_size: int = 8
     nlp_confidence_threshold: float = 0.65
     nlp_max_input_characters: int = 1800
+    neo4j_uri: str = "bolt://127.0.0.1:7687"
+    neo4j_user: str = "neo4j"
+    neo4j_password: str = "enterprise-knowledge-local"
+    neo4j_database: str = "neo4j"
+    graph_write_batch_size: int = 500
 
     model_config = SettingsConfigDict(
         env_file=".env",

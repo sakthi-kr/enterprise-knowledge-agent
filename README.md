@@ -4,13 +4,15 @@ A Python project for building and evaluating an enterprise knowledge assistant t
 
 ## Current implementation
 
-The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, a dense-vector retrieval baseline, grounded answer generation, and local enterprise entity extraction.
+The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, a dense-vector retrieval baseline, grounded answer generation, local enterprise entity extraction, and a Neo4j knowledge graph.
 
 The retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs. Grounded answers use a Gemini provider adapter with structured output, validated inline citations, insufficient-evidence handling, and retry logic for transient provider failures.
 
-Entity extraction uses a local GLiNER2 model with descriptive labels to identify stable named enterprise entities such as people, organizations, teams, projects, services, technologies, and repositories. Entity mentions are normalized into stable canonical IDs before graph construction.
+Entity extraction uses a local GLiNER2 model with descriptive labels to identify stable named enterprise entities such as people, organizations, teams, projects, services, technologies, and repositories. Entity mentions are normalized into stable canonical IDs.
 
-Knowledge-graph storage, graph retrieval, agent orchestration, and model-based evaluation are not implemented yet.
+Neo4j stores source documents and canonical entities with evidence-backed `MENTIONS` relationships and document-level `CO_OCCURS_WITH` relationships. The graph keeps association separate from stronger semantic claims such as ownership or causation.
+
+Graph-assisted retrieval, agent orchestration, and model-based evaluation are not implemented yet.
 
 ## Development
 
@@ -110,3 +112,26 @@ python -m enterprise_knowledge_agent.entity_extraction
 ```
 
 Document-level mentions, canonical entities, and extraction statistics are written under `data/processed/enterprise_rag_bench/entities/`. The full generated records remain excluded from Git, while the small extraction summary is copied to `artifacts/nlp/`.
+
+## Build the knowledge graph
+
+Install the graph dependency and start the local Neo4j service:
+
+```bash
+python -m pip install -e ".[dev,nlp,graph]"
+docker compose up -d neo4j
+```
+
+Build the graph from the generated entity records:
+
+```bash
+python -m enterprise_knowledge_agent.graph_build
+```
+
+Verify the graph, schema objects, and representative entity relationships:
+
+```bash
+python -m enterprise_knowledge_agent.graph_verify
+```
+
+Small graph build and verification summaries are written to `artifacts/graph/`. The Neo4j database itself is persisted in a local Docker volume and is not committed to Git.

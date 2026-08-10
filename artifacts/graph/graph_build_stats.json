@@ -1,0 +1,18 @@
+{
+  "cooccurrence_pair_occurrences": 404620,
+  "cooccurrence_relationship_count": 331933,
+  "document_count": 19361,
+  "document_input_count": 19361,
+  "documents_with_entities": 19304,
+  "elapsed_seconds": 33.292,
+  "entity_count": 47787,
+  "entity_input_count": 47787,
+  "mention_relationship_count": 121030,
+  "mention_relationship_input_count": 121030,
+  "source_document_counts": {
+    "confluence": 5189,
+    "github": 8052,
+    "jira": 6120
+  },
+  "write_batch_size": 500
+}

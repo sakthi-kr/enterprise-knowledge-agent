@@ -23,6 +23,9 @@ dev = [
 nlp = [
     "gliner2[local]==1.3.2",
 ]
+graph = [
+    "neo4j==6.2.0",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -8,5 +8,20 @@ services:
       - qdrant_storage:/qdrant/storage
     restart: unless-stopped
 
+  neo4j:
+    image: neo4j:2026.06.0
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      NEO4J_AUTH: "neo4j/${EKA_NEO4J_PASSWORD:-enterprise-knowledge-local}"
+      NEO4J_server_memory_heap_initial__size: "512m"
+      NEO4J_server_memory_heap_max__size: "512m"
+      NEO4J_server_memory_pagecache_size: "512m"
+    volumes:
+      - neo4j_storage:/data
+    restart: unless-stopped
+
 volumes:
   qdrant_storage:
+  neo4j_storage:
