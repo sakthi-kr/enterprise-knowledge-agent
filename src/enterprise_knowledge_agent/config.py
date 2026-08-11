@@ -34,6 +34,16 @@ class Settings(BaseSettings):
     neo4j_password: str = "enterprise-knowledge-local"
     neo4j_database: str = "neo4j"
     graph_write_batch_size: int = 500
+    graphrag_dense_candidates: int = 30
+    graphrag_seed_documents: int = 6
+    graphrag_seed_entities: int = 16
+    graphrag_neighbor_entities: int = 32
+    graphrag_graph_candidates: int = 40
+    graphrag_max_entity_document_count: int = 500
+    graphrag_min_cooccurrence_documents: int = 2
+    graphrag_rrf_k: int = 60
+    graphrag_dense_weight: float = 1.1
+    graphrag_graph_weight: float = 1.0
 
     model_config = SettingsConfigDict(
         env_file=".env",

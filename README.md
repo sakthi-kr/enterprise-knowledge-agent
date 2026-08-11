@@ -12,7 +12,7 @@ Entity extraction uses a local GLiNER2 model with descriptive labels to identify
 
 Neo4j stores source documents and canonical entities with evidence-backed `MENTIONS` relationships and document-level `CO_OCCURS_WITH` relationships. The graph keeps association separate from stronger semantic claims such as ownership or causation.
 
-Graph-assisted retrieval, agent orchestration, and model-based evaluation are not implemented yet.
+Graph-assisted retrieval expands high-ranked dense evidence through specific Neo4j entities and supported co-occurrences, then fuses dense and graph document rankings with reciprocal-rank fusion. Retrieval quality can be benchmarked directly against the dense baseline. Agent orchestration and model-based answer evaluation are not implemented yet.
 
 ## Development
 
@@ -135,3 +135,19 @@ python -m enterprise_knowledge_agent.graph_verify
 ```
 
 Small graph build and verification summaries are written to `artifacts/graph/`. The Neo4j database itself is persisted in a local Docker volume and is not committed to Git.
+
+## Evaluate graph-assisted retrieval
+
+Keep Qdrant and Neo4j running, then inspect one graph-assisted retrieval trace:
+
+```bash
+python -m enterprise_knowledge_agent.graph_retrieval "What caused the API gateway incident?"
+```
+
+Run the same benchmark used for the dense baseline and write a direct comparison:
+
+```bash
+python -m enterprise_knowledge_agent.graphrag_evaluation
+```
+
+The comparison in `artifacts/retrieval/graphrag_comparison.json` reports overall and per-question-type metric deltas plus the additional query latency introduced by graph expansion.

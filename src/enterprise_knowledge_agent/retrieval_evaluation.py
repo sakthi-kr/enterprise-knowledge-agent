@@ -15,16 +15,22 @@ from enterprise_knowledge_agent.config import get_settings
 from enterprise_knowledge_agent.data_pipeline import read_jsonl
 from enterprise_knowledge_agent.embeddings import FastEmbedTextEncoder
 from enterprise_knowledge_agent.qdrant_store import QdrantStore
-from enterprise_knowledge_agent.vector_search import RetrievalHit, VectorRetriever
+from enterprise_knowledge_agent.vector_search import VectorRetriever
 
 DEFAULT_K_VALUES = (1, 3, 5, 10)
+
+
+class RankedDocument(Protocol):
+    """Minimal ranked-document shape required by retrieval evaluation."""
+
+    doc_id: str
 
 
 class Retriever(Protocol):
     """Document search interface required by retrieval evaluation."""
 
-    def search_documents(self, query: str, *, limit: int = 10) -> list[RetrievalHit]:
-        """Retrieve ranked documents represented by their highest-scoring chunk."""
+    def search_documents(self, query: str, *, limit: int = 10) -> list[RankedDocument]:
+        """Retrieve ranked documents for evaluation."""
 
 
 def metrics_for_ranking(

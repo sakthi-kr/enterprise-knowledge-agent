@@ -1,0 +1,232 @@
+{
+  "by_question_type": {
+    "basic": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": -0.032258,
+          "dense": 0.741935,
+          "graphrag": 0.709677
+        },
+        "mrr@10": {
+          "delta": -0.16739,
+          "dense": 0.57836,
+          "graphrag": 0.41097
+        },
+        "recall@10": {
+          "delta": -0.032258,
+          "dense": 0.741935,
+          "graphrag": 0.709677
+        }
+      },
+      "question_count": 62
+    },
+    "completeness": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": 0.0,
+          "dense": 0.666667,
+          "graphrag": 0.666667
+        },
+        "mrr@10": {
+          "delta": -0.131944,
+          "dense": 0.544444,
+          "graphrag": 0.4125
+        },
+        "recall@10": {
+          "delta": 0.0,
+          "dense": 0.326389,
+          "graphrag": 0.326389
+        }
+      },
+      "question_count": 12
+    },
+    "conflicting_info": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": 0.0,
+          "dense": 1.0,
+          "graphrag": 1.0
+        },
+        "mrr@10": {
+          "delta": 0.0,
+          "dense": 1.0,
+          "graphrag": 1.0
+        },
+        "recall@10": {
+          "delta": 0.0,
+          "dense": 0.75,
+          "graphrag": 0.75
+        }
+      },
+      "question_count": 2
+    },
+    "constrained": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": 0.0,
+          "dense": 0.958333,
+          "graphrag": 0.958333
+        },
+        "mrr@10": {
+          "delta": -0.207986,
+          "dense": 0.78125,
+          "graphrag": 0.573264
+        },
+        "recall@10": {
+          "delta": 0.0,
+          "dense": 0.854167,
+          "graphrag": 0.854167
+        }
+      },
+      "question_count": 24
+    },
+    "intra_document_reasoning": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": 0.0,
+          "dense": 1.0,
+          "graphrag": 1.0
+        },
+        "mrr@10": {
+          "delta": 0.0,
+          "dense": 0.916667,
+          "graphrag": 0.916667
+        },
+        "recall@10": {
+          "delta": 0.0,
+          "dense": 1.0,
+          "graphrag": 1.0
+        }
+      },
+      "question_count": 6
+    },
+    "miscellaneous": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": 0.333333,
+          "dense": 0.5,
+          "graphrag": 0.833333
+        },
+        "mrr@10": {
+          "delta": 0.111111,
+          "dense": 0.5,
+          "graphrag": 0.611111
+        },
+        "recall@10": {
+          "delta": 0.333333,
+          "dense": 0.5,
+          "graphrag": 0.833333
+        }
+      },
+      "question_count": 6
+    },
+    "project_related": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": 0.0,
+          "dense": 0.923077,
+          "graphrag": 0.923077
+        },
+        "mrr@10": {
+          "delta": -0.076923,
+          "dense": 0.923077,
+          "graphrag": 0.846154
+        },
+        "recall@10": {
+          "delta": -0.019231,
+          "dense": 0.679487,
+          "graphrag": 0.660256
+        }
+      },
+      "question_count": 13
+    },
+    "semantic": {
+      "metrics": {
+        "hit_rate@10": {
+          "delta": 0.019231,
+          "dense": 0.326923,
+          "graphrag": 0.346154
+        },
+        "mrr@10": {
+          "delta": -0.075107,
+          "dense": 0.208356,
+          "graphrag": 0.133249
+        },
+        "recall@10": {
+          "delta": 0.019231,
+          "dense": 0.326923,
+          "graphrag": 0.346154
+        }
+      },
+      "question_count": 52
+    }
+  },
+  "evaluated_question_count": 177,
+  "latency_ms": {
+    "delta": 81.453,
+    "dense": 53.804,
+    "graphrag": 135.257
+  },
+  "overall": {
+    "hit_rate@1": {
+      "delta": -0.163842,
+      "dense": 0.468927,
+      "graphrag": 0.305085
+    },
+    "hit_rate@10": {
+      "delta": 0.00565,
+      "dense": 0.661017,
+      "graphrag": 0.666667
+    },
+    "hit_rate@3": {
+      "delta": -0.124294,
+      "dense": 0.59887,
+      "graphrag": 0.474576
+    },
+    "hit_rate@5": {
+      "delta": -0.084746,
+      "dense": 0.627119,
+      "graphrag": 0.542373
+    },
+    "mrr@1": {
+      "delta": -0.163842,
+      "dense": 0.468927,
+      "graphrag": 0.305085
+    },
+    "mrr@10": {
+      "delta": -0.119729,
+      "dense": 0.533764,
+      "graphrag": 0.414035
+    },
+    "mrr@3": {
+      "delta": -0.141242,
+      "dense": 0.52354,
+      "graphrag": 0.382298
+    },
+    "mrr@5": {
+      "delta": -0.132204,
+      "dense": 0.529473,
+      "graphrag": 0.397269
+    },
+    "recall@1": {
+      "delta": -0.141478,
+      "dense": 0.372646,
+      "graphrag": 0.231168
+    },
+    "recall@10": {
+      "delta": 0.004238,
+      "dense": 0.603107,
+      "graphrag": 0.607345
+    },
+    "recall@3": {
+      "delta": -0.127825,
+      "dense": 0.521893,
+      "graphrag": 0.394068
+    },
+    "recall@5": {
+      "delta": -0.085216,
+      "dense": 0.55532,
+      "graphrag": 0.470104
+    }
+  }
+}

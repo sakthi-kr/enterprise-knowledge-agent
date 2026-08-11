@@ -170,6 +170,122 @@ class Neo4jGraphStore:
             {"rows": list(rows)},
         )
 
+    def seed_entities(
+        self,
+        record_ids: Sequence[str],
+        *,
+        limit: int,
+        max_document_count: int,
+    ) -> list[dict[str, Any]]:
+        """Return informative entities mentioned by dense seed documents."""
+
+        if not record_ids:
+            return []
+        if limit <= 0:
+            raise ValueError("limit must be greater than zero")
+        if max_document_count <= 0:
+            raise ValueError("max_document_count must be greater than zero")
+        return self._run(
+            """
+            UNWIND $record_ids AS record_id
+            MATCH (d:Document {record_id: record_id})-[m:MENTIONS]->(e:Entity)
+            WHERE e.document_count <= $max_document_count
+            RETURN e.entity_id AS entity_id,
+                   e.display_name AS display_name,
+                   e.entity_type AS entity_type,
+                   e.document_count AS document_count,
+                   max(m.max_confidence) AS max_confidence,
+                   count(DISTINCT d) AS seed_document_matches
+            ORDER BY seed_document_matches DESC,
+                     max_confidence DESC,
+                     document_count ASC,
+                     display_name ASC
+            LIMIT $limit
+            """,
+            {
+                "record_ids": list(record_ids),
+                "max_document_count": max_document_count,
+                "limit": limit,
+            },
+        )
+
+    def neighboring_entities(
+        self,
+        entity_ids: Sequence[str],
+        *,
+        limit: int,
+        max_document_count: int,
+        min_cooccurrence_documents: int,
+    ) -> list[dict[str, Any]]:
+        """Return specific graph neighbors supported by document co-occurrence."""
+
+        if not entity_ids:
+            return []
+        if limit <= 0:
+            raise ValueError("limit must be greater than zero")
+        if max_document_count <= 0:
+            raise ValueError("max_document_count must be greater than zero")
+        if min_cooccurrence_documents <= 0:
+            raise ValueError("min_cooccurrence_documents must be greater than zero")
+        return self._run(
+            """
+            UNWIND $entity_ids AS entity_id
+            MATCH (seed:Entity {entity_id: entity_id})-[r:CO_OCCURS_WITH]-(neighbor:Entity)
+            WHERE NOT neighbor.entity_id IN $entity_ids
+              AND neighbor.document_count <= $max_document_count
+              AND r.document_count >= $min_cooccurrence_documents
+            RETURN neighbor.entity_id AS entity_id,
+                   neighbor.display_name AS display_name,
+                   neighbor.entity_type AS entity_type,
+                   neighbor.document_count AS document_count,
+                   max(r.document_count) AS max_cooccurrence_documents,
+                   sum(r.document_count) AS cooccurrence_support,
+                   count(DISTINCT seed) AS seed_entity_matches
+            ORDER BY seed_entity_matches DESC,
+                     cooccurrence_support DESC,
+                     document_count ASC,
+                     display_name ASC
+            LIMIT $limit
+            """,
+            {
+                "entity_ids": list(entity_ids),
+                "max_document_count": max_document_count,
+                "min_cooccurrence_documents": min_cooccurrence_documents,
+                "limit": limit,
+            },
+        )
+
+    def documents_for_weighted_entities(
+        self,
+        entities: Sequence[Mapping[str, Any]],
+        *,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        """Rank documents by weighted evidence from selected graph entities."""
+
+        if not entities:
+            return []
+        if limit <= 0:
+            raise ValueError("limit must be greater than zero")
+        return self._run(
+            """
+            UNWIND $entities AS weighted
+            MATCH (e:Entity {entity_id: weighted.entity_id})<-[m:MENTIONS]-(d:Document)
+            RETURN d.record_id AS record_id,
+                   d.doc_id AS doc_id,
+                   d.source_type AS source_type,
+                   d.title AS title,
+                   sum(toFloat(weighted.weight) * m.max_confidence) AS graph_score,
+                   count(DISTINCT e) AS matched_entity_count,
+                   collect(DISTINCT e.display_name) AS matched_entities
+            ORDER BY graph_score DESC,
+                     matched_entity_count DESC,
+                     record_id ASC
+            LIMIT $limit
+            """,
+            {"entities": list(entities), "limit": limit},
+        )
+
     def schema_objects(self) -> dict[str, list[str]]:
         """Return this project's Neo4j constraint and index names."""
 

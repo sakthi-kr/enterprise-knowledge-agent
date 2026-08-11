@@ -1,0 +1,79 @@
+{
+  "evaluated_question_count": 177,
+  "mean_query_latency_ms": 135.257,
+  "metrics": {
+    "hit_rate@1": 0.305085,
+    "hit_rate@10": 0.666667,
+    "hit_rate@3": 0.474576,
+    "hit_rate@5": 0.542373,
+    "mrr@1": 0.305085,
+    "mrr@10": 0.414035,
+    "mrr@3": 0.382298,
+    "mrr@5": 0.397269,
+    "recall@1": 0.231168,
+    "recall@10": 0.607345,
+    "recall@3": 0.394068,
+    "recall@5": 0.470104
+  },
+  "metrics_by_question_type": {
+    "basic": {
+      "hit_rate@10": 0.709677,
+      "mrr@10": 0.41097,
+      "question_count": 62,
+      "recall@10": 0.709677
+    },
+    "completeness": {
+      "hit_rate@10": 0.666667,
+      "mrr@10": 0.4125,
+      "question_count": 12,
+      "recall@10": 0.326389
+    },
+    "conflicting_info": {
+      "hit_rate@10": 1.0,
+      "mrr@10": 1.0,
+      "question_count": 2,
+      "recall@10": 0.75
+    },
+    "constrained": {
+      "hit_rate@10": 0.958333,
+      "mrr@10": 0.573264,
+      "question_count": 24,
+      "recall@10": 0.854167
+    },
+    "intra_document_reasoning": {
+      "hit_rate@10": 1.0,
+      "mrr@10": 0.916667,
+      "question_count": 6,
+      "recall@10": 1.0
+    },
+    "miscellaneous": {
+      "hit_rate@10": 0.833333,
+      "mrr@10": 0.611111,
+      "question_count": 6,
+      "recall@10": 0.833333
+    },
+    "project_related": {
+      "hit_rate@10": 0.923077,
+      "mrr@10": 0.846154,
+      "question_count": 13,
+      "recall@10": 0.660256
+    },
+    "semantic": {
+      "hit_rate@10": 0.346154,
+      "mrr@10": 0.133249,
+      "question_count": 52,
+      "recall@10": 0.346154
+    }
+  },
+  "question_counts_by_type": {
+    "basic": 62,
+    "completeness": 12,
+    "conflicting_info": 2,
+    "constrained": 24,
+    "intra_document_reasoning": 6,
+    "miscellaneous": 6,
+    "project_related": 13,
+    "semantic": 52
+  },
+  "skipped_questions_without_gold_documents": 20
+}
