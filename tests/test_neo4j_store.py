@@ -6,7 +6,7 @@ from typing import Any
 
 import pytest
 
-from enterprise_knowledge_agent.neo4j_store import Neo4jGraphStore, SCHEMA_STATEMENTS
+from enterprise_knowledge_agent.neo4j_store import SCHEMA_STATEMENTS, Neo4jGraphStore
 
 
 class FakeRecord:
