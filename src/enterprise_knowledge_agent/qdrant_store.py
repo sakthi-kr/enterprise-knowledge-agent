@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 import httpx
@@ -106,20 +106,24 @@ class QdrantStore:
         collection_name: str,
         query_vector: Sequence[float],
         limit: int,
+        query_filter: Mapping[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Return nearest dense-vector points with payloads."""
 
         if limit <= 0:
             raise ValueError("limit must be greater than zero")
+        request: dict[str, Any] = {
+            "query": list(query_vector),
+            "limit": limit,
+            "with_payload": True,
+            "with_vector": False,
+        }
+        if query_filter is not None:
+            request["filter"] = dict(query_filter)
         response = self._request(
             "POST",
             f"/collections/{collection_name}/points/query",
-            json={
-                "query": list(query_vector),
-                "limit": limit,
-                "with_payload": True,
-                "with_vector": False,
-            },
+            json=request,
         )
         payload = response.json()
         try:
@@ -138,6 +142,7 @@ class QdrantStore:
         group_by: str,
         limit: int,
         group_size: int = 1,
+        query_filter: Mapping[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Return nearest vector results grouped by a payload field."""
 
@@ -147,17 +152,20 @@ class QdrantStore:
             raise ValueError("limit must be greater than zero")
         if group_size <= 0:
             raise ValueError("group_size must be greater than zero")
+        request: dict[str, Any] = {
+            "query": list(query_vector),
+            "group_by": group_by,
+            "limit": limit,
+            "group_size": group_size,
+            "with_payload": True,
+            "with_vector": False,
+        }
+        if query_filter is not None:
+            request["filter"] = dict(query_filter)
         response = self._request(
             "POST",
             f"/collections/{collection_name}/points/query/groups",
-            json={
-                "query": list(query_vector),
-                "group_by": group_by,
-                "limit": limit,
-                "group_size": group_size,
-                "with_payload": True,
-                "with_vector": False,
-            },
+            json=request,
         )
         payload = response.json()
         try:

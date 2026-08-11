@@ -144,3 +144,26 @@ def test_qdrant_store_surfaces_http_errors() -> None:
             assert "internal error" in str(exc)
         else:
             raise AssertionError("Expected QdrantStoreError")
+
+
+def test_qdrant_group_query_includes_optional_filter() -> None:
+    seen: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/collections/demo/points/query/groups"
+        seen.update(json.loads(request.content))
+        return httpx.Response(200, json={"result": {"groups": []}, "status": "ok"})
+
+    query_filter = {"must": [{"key": "record_id", "match": {"any": ["record-1", "record-2"]}}]}
+    with _store_with_handler(handler) as store:
+        store.query_point_groups(
+            collection_name="demo",
+            query_vector=[0.2, 0.3],
+            group_by="record_id",
+            limit=2,
+            group_size=1,
+            query_filter=query_filter,
+        )
+
+    assert seen["filter"] == query_filter

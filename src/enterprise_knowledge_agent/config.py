@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     gemini_timeout_seconds: float = 60.0
     rag_retrieval_candidates: int = 12
     rag_context_sources: int = 6
+    rag_dense_context_sources: int = 4
+    rag_graph_context_sources: int = 2
+    rag_graph_document_candidates: int = 10
+    rag_graph_fetch_candidates: int = 4
+    rag_graph_min_matched_entities: int = 2
     rag_max_chunks_per_document: int = 2
     rag_max_context_characters: int = 18000
     nlp_model: str = "fastino/gliner2-base-v1"

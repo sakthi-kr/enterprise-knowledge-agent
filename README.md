@@ -4,15 +4,17 @@ A Python project for building and evaluating an enterprise knowledge assistant t
 
 ## Current implementation
 
-The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, a dense-vector retrieval baseline, grounded answer generation, local enterprise entity extraction, and a Neo4j knowledge graph.
+The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, dense-vector retrieval, grounded answer generation, local enterprise entity extraction, a Neo4j knowledge graph, and graph-augmented answer context.
 
-The retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs. Grounded answers use a Gemini provider adapter with structured output, validated inline citations, insufficient-evidence handling, and retry logic for transient provider failures.
+The dense retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs. Grounded answers use a Gemini provider adapter with structured output, validated inline citations, insufficient-evidence handling, and retry logic for transient provider failures.
 
 Entity extraction uses a local GLiNER2 model with descriptive labels to identify stable named enterprise entities such as people, organizations, teams, projects, services, technologies, and repositories. Entity mentions are normalized into stable canonical IDs.
 
 Neo4j stores source documents and canonical entities with evidence-backed `MENTIONS` relationships and document-level `CO_OCCURS_WITH` relationships. The graph keeps association separate from stronger semantic claims such as ownership or causation.
 
-Graph-assisted retrieval expands high-ranked dense evidence through specific Neo4j entities and supported co-occurrences, then fuses dense and graph document rankings with reciprocal-rank fusion. Retrieval quality can be benchmarked directly against the dense baseline. Agent orchestration and model-based answer evaluation are not implemented yet.
+An evaluated reciprocal-rank-fusion experiment found that graph expansion produced a small improvement at rank 10 but degraded early-rank precision and MRR. The runtime answer path therefore keeps dense retrieval authoritative and uses graph retrieval as a bounded context supplement rather than allowing noisy graph evidence to reorder the strongest dense results. The measured comparison is retained under `artifacts/retrieval/`.
+
+Agent orchestration and model-based answer evaluation are not implemented yet.
 
 ## Development
 
@@ -81,7 +83,7 @@ Small experiment outputs are written to `artifacts/retrieval/`.
 
 Copy `.env.example` to `.env` and set `EKA_GEMINI_API_KEY` to a Gemini API key. The `.env` file is excluded from Git.
 
-Ask a question from the command line:
+Keep Qdrant and Neo4j running, then ask a question from the command line:
 
 ```bash
 python -m enterprise_knowledge_agent.rag_query "What caused the API gateway autoscaler incident?"
@@ -95,7 +97,7 @@ curl -X POST http://127.0.0.1:8000/ask \
   -d '{"question":"What caused the API gateway autoscaler incident?"}'
 ```
 
-The response includes an answer status, validated citations with source provenance, retrieval counts, model name, and provider token usage.
+The response includes validated citations, source provenance, provider token usage, the retrieval strategy, and the number of graph-derived context sources actually supplied to the language model.
 
 ## Extract enterprise entities
 
@@ -150,4 +152,4 @@ Run the same benchmark used for the dense baseline and write a direct comparison
 python -m enterprise_knowledge_agent.graphrag_evaluation
 ```
 
-The comparison in `artifacts/retrieval/graphrag_comparison.json` reports overall and per-question-type metric deltas plus the additional query latency introduced by graph expansion.
+The comparison in `artifacts/retrieval/graphrag_comparison.json` reports overall and per-question-type metric deltas plus the additional query latency introduced by graph expansion. `docs/graphrag-context.md` documents how those measurements changed the runtime answer architecture.

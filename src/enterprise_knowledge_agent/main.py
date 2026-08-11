@@ -42,6 +42,7 @@ class CitationResponse(BaseModel):
     title: str
     source_file: str
     text: str
+    retrieval_source: str
 
 
 class TokenUsageResponse(BaseModel):
@@ -63,6 +64,9 @@ class AskResponse(BaseModel):
     usage: TokenUsageResponse
     retrieved_chunk_count: int
     context_source_count: int
+    retrieval_strategy: str
+    graph_context_source_count: int
+    graph_candidate_count: int
 
 
 def provide_answer_service() -> GroundedAnswerService:

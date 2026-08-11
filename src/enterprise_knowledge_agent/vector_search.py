@@ -16,7 +16,12 @@ class SearchStore(Protocol):
     """Qdrant query operations required by the retriever."""
 
     def query_points(
-        self, *, collection_name: str, query_vector: list[float], limit: int
+        self,
+        *,
+        collection_name: str,
+        query_vector: list[float],
+        limit: int,
+        query_filter: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Query the vector collection for chunk hits."""
 
@@ -28,6 +33,7 @@ class SearchStore(Protocol):
         group_by: str,
         limit: int,
         group_size: int = 1,
+        query_filter: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Query the vector collection for grouped hits."""
 
@@ -107,6 +113,48 @@ class VectorRetriever:
             limit=limit,
             group_size=1,
         )
+        return self._groups_to_hits(groups, group_field="doc_id")
+
+    def search_records(
+        self,
+        query: str,
+        *,
+        record_ids: list[str],
+        limit: int | None = None,
+    ) -> list[RetrievalHit]:
+        """Retrieve the best query-matching chunk from selected physical documents."""
+
+        if not record_ids:
+            return []
+        unique_record_ids = list(dict.fromkeys(record_id for record_id in record_ids if record_id))
+        if not unique_record_ids:
+            return []
+        resolved_limit = limit if limit is not None else len(unique_record_ids)
+        self._validate_query(query, limit=resolved_limit)
+        vector = self._encoder.embed_query(query)
+        groups = self._store.query_point_groups(
+            collection_name=self._collection_name,
+            query_vector=vector,
+            group_by="record_id",
+            limit=min(resolved_limit, len(unique_record_ids)),
+            group_size=1,
+            query_filter={
+                "must": [
+                    {
+                        "key": "record_id",
+                        "match": {"any": unique_record_ids},
+                    }
+                ]
+            },
+        )
+        return self._groups_to_hits(groups, group_field="record_id")
+
+    @staticmethod
+    def _groups_to_hits(
+        groups: list[dict[str, Any]],
+        *,
+        group_field: str,
+    ) -> list[RetrievalHit]:
         hits: list[RetrievalHit] = []
         for rank, group in enumerate(groups, start=1):
             grouped_hits = group.get("hits")
@@ -114,7 +162,8 @@ class VectorRetriever:
                 raise RuntimeError(f"Qdrant document group at rank {rank} has no hits")
             hit = _point_to_hit(grouped_hits[0], rank=rank)
             group_id = str(group.get("id", ""))
-            if group_id and group_id.lower() != hit.doc_id.lower():
+            payload_value = str(getattr(hit, group_field))
+            if group_id and group_id.lower() != payload_value.lower():
                 raise RuntimeError(
                     f"Qdrant document group at rank {rank} does not match its hit payload"
                 )
