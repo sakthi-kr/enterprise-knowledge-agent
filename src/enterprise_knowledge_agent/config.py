@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     graphrag_dense_weight: float = 1.1
     graphrag_graph_weight: float = 1.0
     agent_max_tool_calls: int = 2
+    mlflow_enabled: bool = False
+    mlflow_tracking_uri: str = "http://127.0.0.1:5000"
+    mlflow_experiment_name: str = "enterprise-knowledge-agent"
 
     model_config = SettingsConfigDict(
         env_file=".env",

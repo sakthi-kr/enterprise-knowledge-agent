@@ -1,5 +1,9 @@
 """Tests for bounded LangGraph agent orchestration."""
 
+from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Any
+
 from enterprise_knowledge_agent.agent import EnterpriseKnowledgeAgent
 from enterprise_knowledge_agent.agent_types import AgentPlan, AgentStrategy
 from enterprise_knowledge_agent.gemini_client import GeminiAPIError
@@ -11,9 +15,48 @@ from enterprise_knowledge_agent.grounded_answer import (
     LanguageModelOutput,
     TokenUsage,
 )
+from enterprise_knowledge_agent.observability import TraceSpan
 from enterprise_knowledge_agent.vector_search import RetrievalHit
 
 QUESTION = "What caused the incident?"
+
+
+class _RecordingSpan:
+    def __init__(self) -> None:
+        self.inputs: Any = None
+        self.outputs: Any = None
+        self.attributes: dict[str, Any] = {}
+
+    def set_inputs(self, value: Any) -> None:
+        self.inputs = value
+
+    def set_outputs(self, value: Any) -> None:
+        self.outputs = value
+
+    def set_attribute(self, key: str, value: Any) -> None:
+        self.attributes[key] = value
+
+
+class _RecordingTracer:
+    def __init__(self) -> None:
+        self.records: list[dict[str, Any]] = []
+
+    @contextmanager
+    def span(
+        self,
+        name: str,
+        *,
+        span_type: str,
+        inputs: Any | None = None,
+        attributes: dict[str, Any] | None = None,
+    ) -> Iterator[TraceSpan]:
+        span = _RecordingSpan()
+        if inputs is not None:
+            span.inputs = inputs
+        if attributes:
+            span.attributes.update(attributes)
+        self.records.append({"name": name, "span_type": span_type, "span": span})
+        yield span
 
 
 def _chunk(*, rank: int, record_id: str, doc_id: str, text: str) -> RetrievalHit:
@@ -164,6 +207,7 @@ def _agent(
     dense: _DenseRetriever,
     graph: _GraphRetriever,
     max_tool_calls: int = 2,
+    tracer=None,
 ) -> EnterpriseKnowledgeAgent:
     context_builder = GraphContextBuilder(
         max_sources=6,
@@ -189,6 +233,7 @@ def _agent(
         graph_fetch_candidates=4,
         min_graph_matched_entities=2,
         max_tool_calls=max_tool_calls,
+        tracer=tracer,
     )
 
 
@@ -295,3 +340,87 @@ def test_agent_max_tool_calls_prevents_unbounded_graph_execution() -> None:
     assert graph.calls == 0
     assert result.tool_call_count == 1
     assert result.answer.retrieval_strategy == "agent_dense"
+
+
+def test_agent_tracing_records_agent_llm_retriever_and_tool_spans() -> None:
+    graph_chunk = _chunk(
+        rank=1,
+        record_id="graph-strong",
+        doc_id="graph-doc",
+        text="Graph-only evidence",
+    )
+    tracer = _RecordingTracer()
+    agent = _agent(
+        planner=_Planner(AgentStrategy.DENSE_PLUS_GRAPH),
+        dense=_DenseRetriever(record_hits=[graph_chunk]),
+        graph=_GraphRetriever(
+            [
+                _graph_hit(
+                    rank=1,
+                    record_id="graph-strong",
+                    doc_id="graph-doc",
+                    matched_entity_count=3,
+                )
+            ]
+        ),
+        tracer=tracer,
+    )
+
+    result = agent.run(QUESTION)
+
+    assert result.answer.status is AnswerStatus.ANSWERED
+    assert [record["name"] for record in tracer.records] == [
+        "enterprise_agent",
+        "plan",
+        "dense_search",
+        "graph_expand",
+        "synthesize",
+    ]
+    assert [record["span_type"] for record in tracer.records] == [
+        "AGENT",
+        "LLM",
+        "RETRIEVER",
+        "TOOL",
+        "LLM",
+    ]
+    dense_span = tracer.records[2]["span"]
+    assert isinstance(dense_span, _RecordingSpan)
+    assert len(dense_span.outputs) == 6
+    assert dense_span.outputs[0]["page_content"] == ""
+    assert dense_span.outputs[0]["metadata"]["chunk_id"] == "chunk-dense-1"
+    assert "doc_uri" not in dense_span.outputs[0]["metadata"]
+    assert dense_span.inputs == {"query": {"character_count": len(QUESTION)}, "limit": 6}
+
+    plan_span = tracer.records[1]["span"]
+    assert isinstance(plan_span, _RecordingSpan)
+    assert plan_span.inputs == {"question": {"character_count": len(QUESTION)}}
+    assert "reason" not in plan_span.outputs
+    assert plan_span.attributes["mlflow.chat.tokenUsage"]["total_tokens"] == 7
+
+    graph_span = tracer.records[3]["span"]
+    assert isinstance(graph_span, _RecordingSpan)
+    assert graph_span.inputs["question"] == {"character_count": len(QUESTION)}
+    assert graph_span.outputs["selected_document_count"] == 1
+    assert graph_span.outputs["selected_chunk_count"] == 1
+    assert "selected_record_ids" not in graph_span.outputs
+    assert "selected_chunk_ids" not in graph_span.outputs
+
+    answer_span = tracer.records[4]["span"]
+    assert isinstance(answer_span, _RecordingSpan)
+    assert answer_span.inputs["question"] == {"character_count": len(QUESTION)}
+    assert "answer" not in answer_span.outputs
+    assert answer_span.attributes["mlflow.chat.tokenUsage"]["total_tokens"] == 11
+
+    root_span = tracer.records[0]["span"]
+    assert isinstance(root_span, _RecordingSpan)
+    assert root_span.inputs == {"question": {"character_count": len(QUESTION)}}
+    assert root_span.outputs["tool_call_count"] == 2
+    assert root_span.outputs["status"] == "answered"
+
+    for record in tracer.records:
+        span = record["span"]
+        assert QUESTION not in repr(span.inputs)
+        assert QUESTION not in repr(span.outputs)
+        assert "Dense evidence" not in repr(span.outputs)
+        assert "Graph-only evidence" not in repr(span.outputs)
+        assert "Test routing decision" not in repr(span.outputs)

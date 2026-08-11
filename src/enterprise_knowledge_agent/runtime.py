@@ -15,6 +15,7 @@ from enterprise_knowledge_agent.grounded_answer import (
     GroundedAnswerService,
 )
 from enterprise_knowledge_agent.neo4j_store import Neo4jGraphStore
+from enterprise_knowledge_agent.observability import build_tracer
 from enterprise_knowledge_agent.qdrant_store import QdrantStore
 from enterprise_knowledge_agent.vector_search import VectorRetriever
 
@@ -117,6 +118,11 @@ def get_agent_service() -> EnterpriseKnowledgeAgent:
         context_builder=context_builder,
         retrieval_candidates=settings.rag_retrieval_candidates,
     )
+    tracer = build_tracer(
+        enabled=settings.mlflow_enabled,
+        tracking_uri=settings.mlflow_tracking_uri,
+        experiment_name=settings.mlflow_experiment_name,
+    )
     return EnterpriseKnowledgeAgent(
         planner=language_model,
         dense_retriever=dense,
@@ -128,4 +134,5 @@ def get_agent_service() -> EnterpriseKnowledgeAgent:
         graph_fetch_candidates=settings.rag_graph_fetch_candidates,
         min_graph_matched_entities=settings.rag_graph_min_matched_entities,
         max_tool_calls=settings.agent_max_tool_calls,
+        tracer=tracer,
     )

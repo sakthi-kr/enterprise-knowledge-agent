@@ -31,3 +31,8 @@ data/processed/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Local MLflow tracking data
+.mlflow/
+mlflow.db
+mlartifacts/

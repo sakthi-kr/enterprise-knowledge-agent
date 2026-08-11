@@ -16,7 +16,7 @@ An evaluated reciprocal-rank-fusion experiment found that graph expansion produc
 
 The agent workflow uses LangGraph with explicit state and bounded control flow. Gemini selects either dense retrieval alone or dense retrieval followed by graph expansion. Tool execution is recorded, graph-tool failure falls back to dense evidence, and the workflow has a hard tool-call limit before grounded answer synthesis.
 
-Model-based answer evaluation and tracing are not implemented yet.
+Optional MLflow tracing records the agent request as a hierarchical trace with planner, dense retrieval, graph expansion, and grounded synthesis spans. Traces keep model, token, latency, routing, retrieval-score, and outcome metadata while redacting raw questions, retrieved text, source paths, and generated answer bodies. Model-based answer-quality evaluation is not implemented yet.
 
 ## Development
 
@@ -121,6 +121,29 @@ curl -X POST http://127.0.0.1:8000/agent/ask \
 ```
 
 See `docs/agent-orchestration.md` for the routing and failure-handling design.
+
+## Trace agent executions with MLflow
+
+Install the optional observability dependency:
+
+```bash
+python -m pip install -e ".[dev,ops]"
+```
+
+Start a local MLflow server:
+
+```bash
+mlflow server --host 127.0.0.1 --port 5000
+```
+
+In another terminal, enable tracing for one agent process:
+
+```bash
+EKA_MLFLOW_ENABLED=true python -m enterprise_knowledge_agent.agent_query \
+  "How are the API gateway and autoscaler related?"
+```
+
+Open `http://127.0.0.1:5000` to inspect the resulting trace. The local MLflow database and artifacts are excluded from Git. See `docs/llm-observability.md` for the span model and configuration.
 
 ## Extract enterprise entities
 
