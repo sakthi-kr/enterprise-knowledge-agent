@@ -1,4 +1,4 @@
-"""Minimal Gemini REST client for structured grounded answers."""
+"""Minimal Gemini REST client for planning and structured grounded answers."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from typing import Any
 
 import httpx
 
+from enterprise_knowledge_agent.agent_types import AgentPlan, AgentStrategy
 from enterprise_knowledge_agent.grounded_answer import (
     AnswerStatus,
     EvidenceSource,
@@ -32,6 +33,15 @@ so do not return a separate citation list. Prefer a concise answer that resolves
 explicitly instead of hiding them.
 """.strip()
 
+_PLANNER_SYSTEM_INSTRUCTION = """
+You route enterprise knowledge questions to retrieval tools. Return only the requested JSON.
+Choose 'dense_only' for direct factual, lookup, or single-topic questions where semantic retrieval
+is sufficient. Choose 'dense_plus_graph' when the question asks about relationships, connected
+entities, dependencies, cross-document evidence, project context, or multiple related systems.
+Do not answer the question. The reason must be a short routing explanation, not hidden reasoning,
+and must contain no more than 20 words.
+""".strip()
+
 _RESPONSE_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -45,9 +55,22 @@ _RESPONSE_SCHEMA: dict[str, Any] = {
     "additionalProperties": False,
 }
 
+_PLAN_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "strategy": {
+            "type": "string",
+            "enum": ["dense_only", "dense_plus_graph"],
+        },
+        "reason": {"type": "string"},
+    },
+    "required": ["strategy", "reason"],
+    "additionalProperties": False,
+}
+
 
 class GeminiAPIError(RuntimeError):
-    """Raised when the Gemini API cannot produce a valid grounded response."""
+    """Raised when the Gemini API cannot produce a valid structured response."""
 
 
 class GeminiRestClient:
@@ -97,6 +120,37 @@ class GeminiRestClient:
         if self._owns_client:
             self._client.close()
 
+    def plan(self, *, question: str) -> AgentPlan:
+        """Select the bounded retrieval strategy for an agent question."""
+
+        if not question.strip():
+            raise ValueError("question must not be empty")
+
+        body = {
+            "systemInstruction": {"parts": [{"text": _PLANNER_SYSTEM_INSTRUCTION}]},
+            "contents": [
+                {
+                    "role": "user",
+                    "parts": [{"text": f"Enterprise question:\n{question.strip()}"}],
+                }
+            ],
+            "generationConfig": {
+                "responseMimeType": "application/json",
+                "responseJsonSchema": _PLAN_SCHEMA,
+                "maxOutputTokens": 200,
+                "thinkingConfig": {"thinkingLevel": "minimal"},
+            },
+        }
+        payload = self._generate_payload(body)
+        text = self._extract_candidate_text(payload)
+        strategy, reason = self._parse_plan_output(text)
+        return AgentPlan(
+            strategy=strategy,
+            reason=reason,
+            model_name=self.model_name,
+            usage=self._parse_usage(payload),
+        )
+
     def generate(
         self,
         *,
@@ -121,23 +175,26 @@ class GeminiRestClient:
                 "thinkingConfig": {"thinkingLevel": "minimal"},
             },
         }
-        endpoint = f"{self._base_url}/v1beta/models/{self.model_name}:generateContent"
-        response = self._post_with_retries(endpoint=endpoint, body=body)
-
-        try:
-            payload = response.json()
-        except ValueError as exc:
-            raise GeminiAPIError("Gemini API returned invalid JSON") from exc
-
+        payload = self._generate_payload(body)
         text = self._extract_candidate_text(payload)
         status, answer = self._parse_structured_output(text)
-        usage = self._parse_usage(payload)
         return LanguageModelOutput(
             status=status,
             answer=answer,
             model_name=self.model_name,
-            usage=usage,
+            usage=self._parse_usage(payload),
         )
+
+    def _generate_payload(self, body: dict[str, Any]) -> dict[str, Any]:
+        endpoint = f"{self._base_url}/v1beta/models/{self.model_name}:generateContent"
+        response = self._post_with_retries(endpoint=endpoint, body=body)
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise GeminiAPIError("Gemini API returned invalid JSON") from exc
+        if not isinstance(payload, dict):
+            raise GeminiAPIError("Gemini API returned a non-object JSON payload")
+        return payload
 
     def _post_with_retries(self, *, endpoint: str, body: dict[str, Any]) -> httpx.Response:
         last_transport_error: httpx.TransportError | None = None
@@ -230,13 +287,7 @@ class GeminiRestClient:
 
     @staticmethod
     def _parse_structured_output(text: str) -> tuple[AnswerStatus, str]:
-        try:
-            parsed = json.loads(text)
-        except json.JSONDecodeError as exc:
-            raise GeminiAPIError("Gemini structured response was not valid JSON") from exc
-        if not isinstance(parsed, dict):
-            raise GeminiAPIError("Gemini structured response was not an object")
-
+        parsed = GeminiRestClient._parse_json_object(text)
         try:
             status = AnswerStatus(parsed["status"])
             answer = parsed["answer"]
@@ -246,6 +297,31 @@ class GeminiRestClient:
         if not isinstance(answer, str) or not answer.strip():
             raise GeminiAPIError("Gemini structured response contained an invalid answer")
         return status, answer.strip()
+
+    @staticmethod
+    def _parse_plan_output(text: str) -> tuple[AgentStrategy, str]:
+        parsed = GeminiRestClient._parse_json_object(text)
+        try:
+            strategy = AgentStrategy(parsed["strategy"])
+            reason = parsed["reason"]
+        except (KeyError, ValueError) as exc:
+            raise GeminiAPIError("Gemini planner returned an invalid strategy") from exc
+        if not isinstance(reason, str) or not reason.strip():
+            raise GeminiAPIError("Gemini planner returned an invalid reason")
+        reason = " ".join(reason.split())
+        if len(reason) > 240:
+            raise GeminiAPIError("Gemini planner returned an excessively long reason")
+        return strategy, reason
+
+    @staticmethod
+    def _parse_json_object(text: str) -> dict[str, Any]:
+        try:
+            parsed = json.loads(text)
+        except json.JSONDecodeError as exc:
+            raise GeminiAPIError("Gemini structured response was not valid JSON") from exc
+        if not isinstance(parsed, dict):
+            raise GeminiAPIError("Gemini structured response was not an object")
+        return parsed
 
     @staticmethod
     def _parse_usage(payload: dict[str, Any]) -> TokenUsage:

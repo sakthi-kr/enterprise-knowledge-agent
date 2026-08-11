@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     graphrag_rrf_k: int = 60
     graphrag_dense_weight: float = 1.1
     graphrag_graph_weight: float = 1.0
+    agent_max_tool_calls: int = 2
 
     model_config = SettingsConfigDict(
         env_file=".env",

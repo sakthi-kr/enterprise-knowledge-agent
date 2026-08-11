@@ -271,13 +271,13 @@ class GroundedAnswerService:
 
         hits = self._retriever.search(question, limit=self._retrieval_candidates)
         evidence = self._context_builder.build(hits)
-        return self._generate_answer(
+        return self.generate_from_evidence(
             question=question,
             evidence=evidence,
             retrieved_chunk_count=len(hits),
         )
 
-    def _generate_answer(
+    def generate_from_evidence(
         self,
         *,
         question: str,
@@ -286,6 +286,8 @@ class GroundedAnswerService:
         retrieval_strategy: str = "dense",
         graph_candidate_count: int = 0,
     ) -> GroundedAnswer:
+        """Generate and validate one answer from already selected evidence."""
+
         if not evidence:
             return GroundedAnswer(
                 status=AnswerStatus.INSUFFICIENT_EVIDENCE,
@@ -412,7 +414,7 @@ class GraphAugmentedAnswerService(GroundedAnswerService):
             dense_hits=dense_hits,
             graph_hits=graph_hits,
         )
-        return self._generate_answer(
+        return self.generate_from_evidence(
             question=question,
             evidence=evidence,
             retrieved_chunk_count=len(dense_hits) + len(graph_hits),

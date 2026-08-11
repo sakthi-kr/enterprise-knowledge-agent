@@ -1,9 +1,10 @@
-"""Lazy construction of runtime RAG components."""
+"""Lazy construction of runtime RAG and agent components."""
 
 from __future__ import annotations
 
 from functools import lru_cache
 
+from enterprise_knowledge_agent.agent import EnterpriseKnowledgeAgent
 from enterprise_knowledge_agent.config import get_settings
 from enterprise_knowledge_agent.embeddings import FastEmbedTextEncoder
 from enterprise_knowledge_agent.gemini_client import GeminiRestClient
@@ -22,10 +23,12 @@ class ServiceConfigurationError(RuntimeError):
     """Raised when required runtime configuration is missing."""
 
 
-@lru_cache
-def get_answer_service() -> GroundedAnswerService:
-    """Build and cache the graph-augmented grounded answer service."""
-
+def _build_retrieval_components() -> tuple[
+    VectorRetriever,
+    GraphRAGRetriever,
+    GeminiRestClient,
+    GraphContextBuilder,
+]:
     settings = get_settings()
     if not settings.gemini_api_key:
         raise ServiceConfigurationError(
@@ -81,6 +84,15 @@ def get_answer_service() -> GroundedAnswerService:
         max_per_document=settings.rag_max_chunks_per_document,
         max_context_characters=settings.rag_max_context_characters,
     )
+    return dense, graph_retriever, language_model, context_builder
+
+
+@lru_cache
+def get_answer_service() -> GroundedAnswerService:
+    """Build and cache the graph-augmented grounded answer service."""
+
+    settings = get_settings()
+    dense, graph_retriever, language_model, context_builder = _build_retrieval_components()
     return GraphAugmentedAnswerService(
         retriever=dense,
         graph_retriever=graph_retriever,
@@ -90,4 +102,30 @@ def get_answer_service() -> GroundedAnswerService:
         graph_document_candidates=settings.rag_graph_document_candidates,
         graph_fetch_candidates=settings.rag_graph_fetch_candidates,
         min_graph_matched_entities=settings.rag_graph_min_matched_entities,
+    )
+
+
+@lru_cache
+def get_agent_service() -> EnterpriseKnowledgeAgent:
+    """Build and cache the LangGraph enterprise knowledge agent."""
+
+    settings = get_settings()
+    dense, graph_retriever, language_model, context_builder = _build_retrieval_components()
+    answer_service = GroundedAnswerService(
+        retriever=dense,
+        language_model=language_model,
+        context_builder=context_builder,
+        retrieval_candidates=settings.rag_retrieval_candidates,
+    )
+    return EnterpriseKnowledgeAgent(
+        planner=language_model,
+        dense_retriever=dense,
+        graph_retriever=graph_retriever,
+        answer_service=answer_service,
+        context_builder=context_builder,
+        retrieval_candidates=settings.rag_retrieval_candidates,
+        graph_document_candidates=settings.rag_graph_document_candidates,
+        graph_fetch_candidates=settings.rag_graph_fetch_candidates,
+        min_graph_matched_entities=settings.rag_graph_min_matched_entities,
+        max_tool_calls=settings.agent_max_tool_calls,
     )

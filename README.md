@@ -1,10 +1,10 @@
 # Enterprise Knowledge Agent
 
-A Python project for building and evaluating an enterprise knowledge assistant that combines vector retrieval, graph retrieval, and tool-using LLM workflows over multi-source enterprise data.
+A Python project for building and evaluating an enterprise knowledge assistant that combines vector retrieval, graph retrieval, grounded LLM generation, and bounded agent orchestration over multi-source enterprise data.
 
 ## Current implementation
 
-The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, dense-vector retrieval, grounded answer generation, local enterprise entity extraction, a Neo4j knowledge graph, and graph-augmented answer context.
+The repository contains a FastAPI application, environment-based configuration, automated quality checks, a reproducible EnterpriseRAG-Bench data pipeline, dense-vector retrieval, grounded answer generation, local enterprise entity extraction, a Neo4j knowledge graph, graph-augmented answer context, and a LangGraph agent workflow.
 
 The dense retrieval baseline uses a local FastEmbed model for CPU inference and Qdrant for persistent vector search, with deterministic chunk provenance and benchmark evaluation against ground-truth document IDs. Grounded answers use a Gemini provider adapter with structured output, validated inline citations, insufficient-evidence handling, and retry logic for transient provider failures.
 
@@ -14,7 +14,9 @@ Neo4j stores source documents and canonical entities with evidence-backed `MENTI
 
 An evaluated reciprocal-rank-fusion experiment found that graph expansion produced a small improvement at rank 10 but degraded early-rank precision and MRR. The runtime answer path therefore keeps dense retrieval authoritative and uses graph retrieval as a bounded context supplement rather than allowing noisy graph evidence to reorder the strongest dense results. The measured comparison is retained under `artifacts/retrieval/`.
 
-Agent orchestration and model-based answer evaluation are not implemented yet.
+The agent workflow uses LangGraph with explicit state and bounded control flow. Gemini selects either dense retrieval alone or dense retrieval followed by graph expansion. Tool execution is recorded, graph-tool failure falls back to dense evidence, and the workflow has a hard tool-call limit before grounded answer synthesis.
+
+Model-based answer evaluation and tracing are not implemented yet.
 
 ## Development
 
@@ -98,6 +100,27 @@ curl -X POST http://127.0.0.1:8000/ask \
 ```
 
 The response includes validated citations, source provenance, provider token usage, the retrieval strategy, and the number of graph-derived context sources actually supplied to the language model.
+
+## Run the agent
+
+Keep Qdrant and Neo4j running and ensure the Gemini API key is configured. Run one agent query from the command line:
+
+```bash
+python -m enterprise_knowledge_agent.agent_query \
+  "How are the API gateway and autoscaler related?"
+```
+
+The result includes the planner decision, the bounded retrieval-tool trace, the grounded answer, citations, and separate planner and answer token usage.
+
+The API exposes the same workflow at `POST /agent/ask`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/agent/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question":"How are the API gateway and autoscaler related?"}'
+```
+
+See `docs/agent-orchestration.md` for the routing and failure-handling design.
 
 ## Extract enterprise entities
 
