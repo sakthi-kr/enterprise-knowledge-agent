@@ -1,17 +1,31 @@
-# Acceptance Criteria
+# Completion Criteria
 
-The repository is considered complete when the following capabilities work end to end and are reproducible from a clean checkout:
+The implementation is considered complete when the core capabilities below are present and the final clean-checkout audit passes.
 
-- A selected enterprise corpus can be ingested into a normalized document model with stable identifiers and source provenance.
-- A vector-retrieval baseline can return relevant evidence and produce grounded answers with citations.
-- A knowledge graph can be built from extracted entities and relationships and queried for useful cross-document context.
-- Graph-assisted retrieval can be compared against the vector baseline on the same evaluation set.
-- An agent can choose among retrieval and structured-data tools, use multiple tools when needed, and stop under explicit conditions.
-- The system can abstain when available evidence is insufficient.
-- LLM calls, retrieval operations, tool calls, latency, and token usage are traceable.
-- Evaluation results compare the implemented retrieval strategies using reproducible metrics and a fixed question set.
-- The API exposes health and question-answering endpoints with useful error handling.
-- Automated tests cover the important data, retrieval, graph, agent, and API behavior.
-- The application can be started locally with documented commands.
-- Continuous integration runs linting, formatting checks, and tests on every push and pull request.
-- The README reports measured results, known limitations, and the exact scope that is implemented.
+## Implemented
+
+- [x] Ingest the selected Confluence-, Jira-, and GitHub-style corpus into a normalized document model with stable identifiers and source provenance.
+- [x] Build a persistent Qdrant vector index from deterministic chunks.
+- [x] Evaluate dense retrieval against benchmark evidence documents.
+- [x] Produce grounded answers with validated citations and an explicit insufficient-evidence outcome.
+- [x] Extract typed enterprise entities locally and normalize them into stable canonical IDs.
+- [x] Build and verify a Neo4j graph using evidence-backed mentions and co-occurrence relationships.
+- [x] Compare graph-assisted retrieval against the dense baseline on the same retrieval evaluation set.
+- [x] Keep graph-derived answer context bounded after the graph-ranking experiment showed an early-rank regression.
+- [x] Run a LangGraph workflow with explicit state, conditional dense/graph tool routing, bounded tool calls, and fallbacks.
+- [x] Trace planner, retrieval, graph-tool, synthesis, latency, and token metadata with privacy-safe MLflow spans.
+- [x] Compare dense RAG, graph-context RAG, and agent execution under one fixed provider/model and suppress comparisons when a run is incomplete.
+- [x] Expose `/health`, `/ready`, `/ask`, and `/agent/ask` through FastAPI with request IDs, structured logs, timeouts, and stable errors.
+- [x] Package the API as a non-root container.
+- [x] Run the API, Qdrant, Neo4j, and MLflow through one Docker Compose stack with persistent volumes and a smoke test.
+- [x] Run linting, formatting checks, and tests in CI on pushes and pull requests.
+- [x] Commit measured retrieval, graph, and answer-evaluation summaries without committing raw benchmark content or secrets.
+- [x] Document measured regressions and limitations instead of presenting graph or agent complexity as an automatic improvement.
+
+## Final release audit
+
+- [ ] Reproduce the documented quality checks from a clean checkout.
+- [ ] Validate documentation links and repository hygiene.
+- [ ] Confirm no credentials, local databases, generated corpus data, or machine-specific files are tracked.
+- [ ] Validate the Docker/Compose configuration and local smoke-test instructions from the release candidate.
+- [ ] Create the final release tag after the audit passes.
