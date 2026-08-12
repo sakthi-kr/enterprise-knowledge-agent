@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.6-flash"
     gemini_base_url: str = "https://generativelanguage.googleapis.com"
     gemini_timeout_seconds: float = 60.0
+    groq_api_key: str | None = None
+    groq_model: str = "openai/gpt-oss-20b"
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+    groq_timeout_seconds: float = 60.0
     rag_retrieval_candidates: int = 12
     rag_context_sources: int = 6
     rag_dense_context_sources: int = 4

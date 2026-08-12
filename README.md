@@ -16,7 +16,7 @@ An evaluated reciprocal-rank-fusion experiment found that graph expansion produc
 
 The agent workflow uses LangGraph with explicit state and bounded control flow. Gemini selects either dense retrieval alone or dense retrieval followed by graph expansion. Tool execution is recorded, graph-tool failure falls back to dense evidence, and the workflow has a hard tool-call limit before grounded answer synthesis.
 
-Optional MLflow tracing records the agent request as a hierarchical trace with planner, dense retrieval, graph expansion, and grounded synthesis spans. Traces keep model, token, latency, routing, retrieval-score, and outcome metadata while redacting raw questions, retrieved text, source paths, and generated answer bodies. Model-based answer-quality evaluation is not implemented yet.
+Optional MLflow tracing records the agent request as a hierarchical trace with planner, dense retrieval, graph expansion, and grounded synthesis spans. Traces keep model, token, latency, routing, retrieval-score, and outcome metadata while redacting raw questions, retrieved text, source paths, and generated answer bodies. The answer-evaluation harness can run all compared systems against one selected provider/model while keeping benchmark references local.
 
 ## Development
 
@@ -199,3 +199,30 @@ python -m enterprise_knowledge_agent.graphrag_evaluation
 ```
 
 The comparison in `artifacts/retrieval/graphrag_comparison.json` reports overall and per-question-type metric deltas plus the additional query latency introduced by graph expansion. `docs/graphrag-context.md` documents how those measurements changed the runtime answer architecture.
+
+## Compare answer and agent quality
+
+Keep Qdrant and Neo4j running, then run a balanced local evaluation of dense RAG,
+graph-augmented RAG, and the LangGraph agent:
+
+```bash
+python -m enterprise_knowledge_agent.answer_evaluation
+```
+
+The evaluation backend is provider-selectable. For a Groq run with an explicit shared context
+budget across all compared systems:
+
+```bash
+python -m enterprise_knowledge_agent.answer_evaluation --provider groq \
+  --context-sources 4 --dense-context-sources 3 --graph-context-sources 1 \
+  --max-context-characters 8000
+```
+
+Provider/model runs use separate artifact files so results from different LLMs are never mixed.
+The harness is resumable, paces provider calls, retries transient failures, and writes privacy-safe
+per-question rows plus an aggregate comparison to `artifacts/evaluation/`. Failed pairs remain
+eligible for retry, and cross-system comparisons are withheld until the selected run is complete.
+It measures answerability, citation/document quality, local semantic answer proxies, latency, token
+usage, estimated paid-tier token cost, and agent tool-routing behavior. These internal proxy
+metrics are not presented as EnterpriseRAG-Bench leaderboard scores. See
+`docs/answer-evaluation.md` for metric definitions and limitations.

@@ -10,7 +10,6 @@ from enterprise_knowledge_agent.agent_types import (
     AgentStrategy,
     ToolExecution,
 )
-from enterprise_knowledge_agent.gemini_client import GeminiAPIError
 from enterprise_knowledge_agent.graph_retrieval import GraphRAGRetriever, GraphRetrievalTrace
 from enterprise_knowledge_agent.grounded_answer import (
     GraphContextBuilder,
@@ -18,6 +17,7 @@ from enterprise_knowledge_agent.grounded_answer import (
     GroundedAnswerService,
     TokenUsage,
 )
+from enterprise_knowledge_agent.language_model_errors import LanguageModelAPIError
 from enterprise_knowledge_agent.observability import NullTracer, Tracer, TraceSpan
 from enterprise_knowledge_agent.vector_search import RetrievalHit, VectorRetriever
 
@@ -52,9 +52,15 @@ def _token_usage_dict(usage: TokenUsage) -> dict[str, int]:
     }
 
 
-def _set_llm_span_attributes(span: TraceSpan, *, model_name: str, usage: TokenUsage) -> None:
+def _set_llm_span_attributes(
+    span: TraceSpan,
+    *,
+    model_name: str,
+    provider_name: str,
+    usage: TokenUsage,
+) -> None:
     span.set_attribute("mlflow.llm.model", model_name)
-    span.set_attribute("mlflow.llm.provider", "google")
+    span.set_attribute("mlflow.llm.provider", provider_name)
     span.set_attribute("mlflow.chat.tokenUsage", _token_usage_dict(usage))
     span.set_attribute("enterprise.thinking_tokens", usage.thinking_tokens)
 
@@ -115,6 +121,7 @@ class EnterpriseKnowledgeAgent:
                 raise ValueError(f"{name} must be greater than zero")
 
         self._planner = planner
+        self._llm_provider_name = str(getattr(planner, "provider_name", "unknown"))
         self._dense_retriever = dense_retriever
         self._graph_retriever = graph_retriever
         self._answer_service = answer_service
@@ -212,7 +219,7 @@ class EnterpriseKnowledgeAgent:
             try:
                 plan = self._planner.plan(question=question)
                 fallback = False
-            except GeminiAPIError:
+            except LanguageModelAPIError:
                 plan = AgentPlan(
                     strategy=AgentStrategy.DENSE_ONLY,
                     reason="Planner unavailable; dense retrieval selected as the safe fallback.",
@@ -228,7 +235,12 @@ class EnterpriseKnowledgeAgent:
                 }
             )
             if not fallback:
-                _set_llm_span_attributes(span, model_name=plan.model_name, usage=plan.usage)
+                _set_llm_span_attributes(
+                    span,
+                    model_name=plan.model_name,
+                    provider_name=self._llm_provider_name,
+                    usage=plan.usage,
+                )
             return {"plan": plan, "planner_fallback": fallback}
 
     def _dense_search_node(self, state: AgentState) -> dict[str, Any]:
@@ -386,5 +398,10 @@ class EnterpriseKnowledgeAgent:
                     "citation_count": len(answer.citations),
                 }
             )
-            _set_llm_span_attributes(span, model_name=answer.model_name, usage=answer.usage)
+            _set_llm_span_attributes(
+                span,
+                model_name=answer.model_name,
+                provider_name=self._llm_provider_name,
+                usage=answer.usage,
+            )
             return {"answer": answer}

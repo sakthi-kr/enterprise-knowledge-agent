@@ -1,0 +1,415 @@
+{
+  "comparison_vs_dense": {
+    "agent": {
+      "answerability_accuracy": {
+        "candidate": 0.166667,
+        "delta": -0.166666,
+        "dense": 0.333333
+      },
+      "estimated_standard_paid_cost_usd": {
+        "candidate": 0.005051,
+        "delta": 0.000646,
+        "dense": 0.004405
+      },
+      "mean_answer_fact_coverage_proxy": {
+        "candidate": 0.0625,
+        "delta": -0.130035,
+        "dense": 0.192535
+      },
+      "mean_citation_precision": {
+        "candidate": 0.0625,
+        "delta": -0.0625,
+        "dense": 0.125
+      },
+      "mean_document_recall": {
+        "candidate": 0.0625,
+        "delta": -0.03125,
+        "dense": 0.09375
+      },
+      "mean_gold_answer_similarity_proxy": {
+        "candidate": 0.055991,
+        "delta": -0.17094,
+        "dense": 0.226931
+      },
+      "mean_latency_ms": {
+        "candidate": 1483.598444,
+        "delta": 647.346833,
+        "dense": 836.251611
+      },
+      "mean_total_tokens": {
+        "candidate": 2855.388889,
+        "delta": 330.0,
+        "dense": 2525.388889
+      }
+    },
+    "graph": {
+      "answerability_accuracy": {
+        "candidate": 0.333333,
+        "delta": 0.0,
+        "dense": 0.333333
+      },
+      "estimated_standard_paid_cost_usd": {
+        "candidate": 0.004279,
+        "delta": -0.000126,
+        "dense": 0.004405
+      },
+      "mean_answer_fact_coverage_proxy": {
+        "candidate": 0.097569,
+        "delta": -0.094966,
+        "dense": 0.192535
+      },
+      "mean_citation_precision": {
+        "candidate": 0.09375,
+        "delta": -0.03125,
+        "dense": 0.125
+      },
+      "mean_document_recall": {
+        "candidate": 0.083333,
+        "delta": -0.010417,
+        "dense": 0.09375
+      },
+      "mean_gold_answer_similarity_proxy": {
+        "candidate": 0.216485,
+        "delta": -0.010446,
+        "dense": 0.226931
+      },
+      "mean_latency_ms": {
+        "candidate": 1129.183944,
+        "delta": 292.932333,
+        "dense": 836.251611
+      },
+      "mean_total_tokens": {
+        "candidate": 2510.777778,
+        "delta": -14.611111,
+        "dense": 2525.388889
+      }
+    }
+  },
+  "context_budget": {
+    "dense_sources": 3,
+    "graph_sources": 1,
+    "max_characters": 8000,
+    "max_sources": 4
+  },
+  "cost_assumptions": {
+    "currency": "USD",
+    "free_tier_may_cost_zero": true,
+    "input_price_per_million_tokens": 0.075,
+    "metric_name": "estimated_standard_paid_cost_usd",
+    "model": "openai/gpt-oss-20b",
+    "output_price_per_million_tokens_including_thinking": 0.3,
+    "provider": "groq"
+  },
+  "evaluation_complete": true,
+  "evaluation_model": "openai/gpt-oss-20b",
+  "evaluation_provider": "groq",
+  "evaluation_scope": "balanced_local_proxy",
+  "evaluator_version": "2026-08-multi-provider-local-semantic-v2",
+  "leaderboard_comparable": false,
+  "metrics_by_system": {
+    "agent": {
+      "answerability_accuracy": 0.166667,
+      "by_question_type": {
+        "basic": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1443.728,
+          "question_count": 2
+        },
+        "completeness": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1687.8085,
+          "question_count": 2
+        },
+        "conflicting_info": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1997.195,
+          "question_count": 2
+        },
+        "constrained": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1575.2125,
+          "question_count": 2
+        },
+        "info_not_found": {
+          "answerability_accuracy": 1.0,
+          "mean_answer_fact_coverage_proxy": null,
+          "mean_document_recall": null,
+          "mean_gold_answer_similarity_proxy": null,
+          "mean_latency_ms": 1394.8055,
+          "question_count": 2
+        },
+        "intra_document_reasoning": {
+          "answerability_accuracy": 0.5,
+          "mean_answer_fact_coverage_proxy": 0.5,
+          "mean_document_recall": 0.5,
+          "mean_gold_answer_similarity_proxy": 0.447931,
+          "mean_latency_ms": 1198.5555,
+          "question_count": 2
+        },
+        "miscellaneous": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 952.0885,
+          "question_count": 2
+        },
+        "project_related": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1557.586,
+          "question_count": 2
+        },
+        "semantic": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1545.4065,
+          "question_count": 2
+        }
+      },
+      "completed_question_count": 18,
+      "error_count": 0,
+      "error_status_counts": {},
+      "estimated_standard_paid_cost_usd": 0.005051,
+      "expected_question_count": 18,
+      "graph_tool_call_rate": 0.8333333333333334,
+      "graph_tool_yield_rate": 0.6666666666666666,
+      "mean_answer_fact_coverage_proxy": 0.0625,
+      "mean_citation_precision": 0.0625,
+      "mean_document_recall": 0.0625,
+      "mean_gold_answer_similarity_proxy": 0.055991,
+      "mean_invalid_extra_docs": 0.0,
+      "mean_latency_ms": 1483.598444,
+      "mean_tool_call_count": 1.833333,
+      "mean_total_tokens": 2855.388889,
+      "planner_fallback_rate": 0.0,
+      "planner_policy_alignment": 0.388889,
+      "question_count": 18,
+      "successful_question_count": 18,
+      "total_tokens": 51397
+    },
+    "dense": {
+      "answerability_accuracy": 0.333333,
+      "by_question_type": {
+        "basic": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 918.199,
+          "question_count": 2
+        },
+        "completeness": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 962.5715,
+          "question_count": 2
+        },
+        "conflicting_info": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 601.029,
+          "question_count": 2
+        },
+        "constrained": {
+          "answerability_accuracy": 1.0,
+          "mean_answer_fact_coverage_proxy": 0.8125,
+          "mean_document_recall": 0.5,
+          "mean_gold_answer_similarity_proxy": 0.896206,
+          "mean_latency_ms": 741.593,
+          "question_count": 2
+        },
+        "info_not_found": {
+          "answerability_accuracy": 1.0,
+          "mean_answer_fact_coverage_proxy": null,
+          "mean_document_recall": null,
+          "mean_gold_answer_similarity_proxy": null,
+          "mean_latency_ms": 732.636,
+          "question_count": 2
+        },
+        "intra_document_reasoning": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 857.6725,
+          "question_count": 2
+        },
+        "miscellaneous": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 546.8565,
+          "question_count": 2
+        },
+        "project_related": {
+          "answerability_accuracy": 0.5,
+          "mean_answer_fact_coverage_proxy": 0.45,
+          "mean_document_recall": 0.25,
+          "mean_gold_answer_similarity_proxy": 0.478712,
+          "mean_latency_ms": 1188.227,
+          "question_count": 2
+        },
+        "semantic": {
+          "answerability_accuracy": 0.5,
+          "mean_answer_fact_coverage_proxy": 0.277778,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.440532,
+          "mean_latency_ms": 977.48,
+          "question_count": 2
+        }
+      },
+      "completed_question_count": 18,
+      "error_count": 0,
+      "error_status_counts": {},
+      "estimated_standard_paid_cost_usd": 0.004405,
+      "expected_question_count": 18,
+      "mean_answer_fact_coverage_proxy": 0.192535,
+      "mean_citation_precision": 0.125,
+      "mean_document_recall": 0.09375,
+      "mean_gold_answer_similarity_proxy": 0.226931,
+      "mean_invalid_extra_docs": 0.25,
+      "mean_latency_ms": 836.251611,
+      "mean_total_tokens": 2525.388889,
+      "question_count": 18,
+      "successful_question_count": 18,
+      "total_tokens": 45457
+    },
+    "graph": {
+      "answerability_accuracy": 0.333333,
+      "by_question_type": {
+        "basic": {
+          "answerability_accuracy": 0.5,
+          "mean_answer_fact_coverage_proxy": 0.166666,
+          "mean_document_recall": 0.5,
+          "mean_gold_answer_similarity_proxy": 0.441843,
+          "mean_latency_ms": 1553.1335,
+          "question_count": 2
+        },
+        "completeness": {
+          "answerability_accuracy": 0.5,
+          "mean_answer_fact_coverage_proxy": 0.333334,
+          "mean_document_recall": 0.166666,
+          "mean_gold_answer_similarity_proxy": 0.43225,
+          "mean_latency_ms": 1099.2855,
+          "question_count": 2
+        },
+        "conflicting_info": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1069.276,
+          "question_count": 2
+        },
+        "constrained": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 888.1875,
+          "question_count": 2
+        },
+        "info_not_found": {
+          "answerability_accuracy": 1.0,
+          "mean_answer_fact_coverage_proxy": null,
+          "mean_document_recall": null,
+          "mean_gold_answer_similarity_proxy": null,
+          "mean_latency_ms": 1220.5625,
+          "question_count": 2
+        },
+        "intra_document_reasoning": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 1022.3185,
+          "question_count": 2
+        },
+        "miscellaneous": {
+          "answerability_accuracy": 0.0,
+          "mean_answer_fact_coverage_proxy": 0.0,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.0,
+          "mean_latency_ms": 669.8845,
+          "question_count": 2
+        },
+        "project_related": {
+          "answerability_accuracy": 0.5,
+          "mean_answer_fact_coverage_proxy": 0.225,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.423322,
+          "mean_latency_ms": 1584.4725,
+          "question_count": 2
+        },
+        "semantic": {
+          "answerability_accuracy": 0.5,
+          "mean_answer_fact_coverage_proxy": 0.055556,
+          "mean_document_recall": 0.0,
+          "mean_gold_answer_similarity_proxy": 0.434464,
+          "mean_latency_ms": 1055.535,
+          "question_count": 2
+        }
+      },
+      "completed_question_count": 18,
+      "error_count": 0,
+      "error_status_counts": {},
+      "estimated_standard_paid_cost_usd": 0.004279,
+      "expected_question_count": 18,
+      "mean_answer_fact_coverage_proxy": 0.097569,
+      "mean_citation_precision": 0.09375,
+      "mean_document_recall": 0.083333,
+      "mean_gold_answer_similarity_proxy": 0.216485,
+      "mean_invalid_extra_docs": 0.4375,
+      "mean_latency_ms": 1129.183944,
+      "mean_total_tokens": 2510.777778,
+      "question_count": 18,
+      "successful_question_count": 18,
+      "total_tokens": 45194
+    }
+  },
+  "question_counts_by_type": {
+    "basic": 2,
+    "completeness": 2,
+    "conflicting_info": 2,
+    "constrained": 2,
+    "info_not_found": 2,
+    "intra_document_reasoning": 2,
+    "miscellaneous": 2,
+    "project_related": 2,
+    "semantic": 2
+  },
+  "sample_per_type": 2,
+  "sample_seed": 17,
+  "selected_question_count": 18,
+  "semantic_proxy": {
+    "embedding_model": "BAAI/bge-small-en-v1.5",
+    "fact_similarity_threshold": 0.7
+  },
+  "systems": [
+    "dense",
+    "graph",
+    "agent"
+  ]
+}

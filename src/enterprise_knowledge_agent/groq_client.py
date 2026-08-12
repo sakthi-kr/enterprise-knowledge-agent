@@ -1,4 +1,4 @@
-"""Minimal Gemini REST client for planning and structured grounded answers."""
+"""Groq REST client for structured planning and grounded answer generation."""
 
 from __future__ import annotations
 
@@ -27,25 +27,25 @@ from enterprise_knowledge_agent.llm_contract import (
     build_grounded_prompt,
 )
 
-_MODEL_NAME_PATTERN = re.compile(r"^[A-Za-z0-9._-]+$")
-_RETRYABLE_STATUS_CODES = {408, 429}
+_MODEL_NAME_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+_RETRYABLE_STATUS_CODES = {408, 422, 429}
 
 
-class GeminiAPIError(LanguageModelAPIError):
-    """Raised when the Gemini API cannot produce a valid structured response."""
+class GroqAPIError(LanguageModelAPIError):
+    """Raised when the Groq API cannot produce a valid structured response."""
 
 
-class GeminiRestClient:
-    """Call Gemini GenerateContent through a small provider-specific adapter."""
+class GroqRestClient:
+    """Call Groq Chat Completions with strict JSON-schema responses."""
 
-    provider_name = "google"
+    provider_name = "groq"
 
     def __init__(
         self,
         *,
         api_key: str,
-        model_name: str = "gemini-3.6-flash",
-        base_url: str = "https://generativelanguage.googleapis.com",
+        model_name: str = "openai/gpt-oss-20b",
+        base_url: str = "https://api.groq.com/openai/v1",
         timeout_seconds: float = 60.0,
         max_retries: int = 3,
         retry_base_delay_seconds: float = 1.0,
@@ -53,9 +53,9 @@ class GeminiRestClient:
         sleep: Callable[[float], None] = time.sleep,
     ) -> None:
         if not api_key.strip():
-            raise ValueError("Gemini API key must not be empty")
+            raise ValueError("Groq API key must not be empty")
         if not _MODEL_NAME_PATTERN.fullmatch(model_name):
-            raise ValueError("Gemini model name contains unsupported characters")
+            raise ValueError("Groq model name contains unsupported characters")
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be greater than zero")
         if max_retries < 0:
@@ -72,7 +72,7 @@ class GeminiRestClient:
         self._owns_client = client is None
         self._client = client or httpx.Client(timeout=timeout_seconds)
 
-    def __enter__(self) -> GeminiRestClient:
+    def __enter__(self) -> GroqRestClient:
         return self
 
     def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
@@ -91,23 +91,25 @@ class GeminiRestClient:
             raise ValueError("question must not be empty")
 
         body = {
-            "systemInstruction": {"parts": [{"text": PLANNER_SYSTEM_INSTRUCTION}]},
-            "contents": [
+            "model": self.model_name,
+            "messages": [
+                {"role": "system", "content": PLANNER_SYSTEM_INSTRUCTION},
                 {
                     "role": "user",
-                    "parts": [{"text": f"Enterprise question:\n{question.strip()}"}],
-                }
+                    "content": f"Enterprise question:\n{question.strip()}",
+                },
             ],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "responseJsonSchema": PLAN_SCHEMA,
-                "maxOutputTokens": 200,
-                "thinkingConfig": {"thinkingLevel": "minimal"},
-            },
+            "response_format": self._structured_response_format(
+                name="enterprise_agent_plan",
+                schema=PLAN_SCHEMA,
+            ),
+            "reasoning_effort": "low",
+            "include_reasoning": False,
+            "max_completion_tokens": 200,
+            "citation_options": "disabled",
         }
-        payload = self._generate_payload(body)
-        text = self._extract_candidate_text(payload)
-        strategy, reason = self._parse_plan_output(text)
+        payload = self._chat_payload(body)
+        strategy, reason = self._parse_plan_output(self._extract_message_text(payload))
         return AgentPlan(
             strategy=strategy,
             reason=reason,
@@ -129,25 +131,25 @@ class GeminiRestClient:
             raise ValueError("evidence must not be empty")
 
         body = {
-            "systemInstruction": {"parts": [{"text": GROUNDING_SYSTEM_INSTRUCTION}]},
-            "contents": [
+            "model": self.model_name,
+            "messages": [
+                {"role": "system", "content": GROUNDING_SYSTEM_INSTRUCTION},
                 {
                     "role": "user",
-                    "parts": [
-                        {"text": build_grounded_prompt(question=question, evidence=evidence)}
-                    ],
-                }
+                    "content": build_grounded_prompt(question=question, evidence=evidence),
+                },
             ],
-            "generationConfig": {
-                "responseMimeType": "application/json",
-                "responseJsonSchema": ANSWER_SCHEMA,
-                "maxOutputTokens": 1000,
-                "thinkingConfig": {"thinkingLevel": "minimal"},
-            },
+            "response_format": self._structured_response_format(
+                name="grounded_enterprise_answer",
+                schema=ANSWER_SCHEMA,
+            ),
+            "reasoning_effort": "low",
+            "include_reasoning": False,
+            "max_completion_tokens": 1000,
+            "citation_options": "disabled",
         }
-        payload = self._generate_payload(body)
-        text = self._extract_candidate_text(payload)
-        status, answer = self._parse_structured_output(text)
+        payload = self._chat_payload(body)
+        status, answer = self._parse_structured_output(self._extract_message_text(payload))
         return LanguageModelOutput(
             status=status,
             answer=answer,
@@ -155,15 +157,26 @@ class GeminiRestClient:
             usage=self._parse_usage(payload),
         )
 
-    def _generate_payload(self, body: dict[str, Any]) -> dict[str, Any]:
-        endpoint = f"{self._base_url}/v1beta/models/{self.model_name}:generateContent"
+    @staticmethod
+    def _structured_response_format(*, name: str, schema: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": name,
+                "strict": True,
+                "schema": schema,
+            },
+        }
+
+    def _chat_payload(self, body: dict[str, Any]) -> dict[str, Any]:
+        endpoint = f"{self._base_url}/chat/completions"
         response = self._post_with_retries(endpoint=endpoint, body=body)
         try:
             payload = response.json()
         except ValueError as exc:
-            raise GeminiAPIError("Gemini API returned invalid JSON") from exc
+            raise GroqAPIError("Groq API returned invalid JSON") from exc
         if not isinstance(payload, dict):
-            raise GeminiAPIError("Gemini API returned a non-object JSON payload")
+            raise GroqAPIError("Groq API returned a non-object JSON payload")
         return payload
 
     def _post_with_retries(self, *, endpoint: str, body: dict[str, Any]) -> httpx.Response:
@@ -174,7 +187,7 @@ class GeminiRestClient:
                 response = self._client.post(
                     endpoint,
                     headers={
-                        "x-goog-api-key": self._api_key,
+                        "Authorization": f"Bearer {self._api_key}",
                         "Content-Type": "application/json",
                     },
                     json=body,
@@ -190,17 +203,26 @@ class GeminiRestClient:
                 return response
 
             if self._is_retryable_status(response.status_code) and attempt < self._max_retries:
-                self._sleep(self._retry_delay(attempt))
+                self._sleep(self._retry_delay(attempt, response=response))
                 continue
 
             message = self._extract_error_message(response)
-            raise GeminiAPIError(f"Gemini API returned HTTP {response.status_code}: {message}")
+            raise GroqAPIError(f"Groq API returned HTTP {response.status_code}: {message}")
 
-        raise GeminiAPIError(
-            "Could not reach the Gemini API after retries"
-        ) from last_transport_error
+        raise GroqAPIError("Could not reach the Groq API after retries") from last_transport_error
 
-    def _retry_delay(self, attempt: int) -> float:
+    def _retry_delay(self, attempt: int, *, response: httpx.Response | None = None) -> float:
+        if response is not None:
+            retry_after = response.headers.get("retry-after")
+            if retry_after is not None:
+                try:
+                    parsed = float(retry_after)
+                except ValueError:
+                    pass
+                else:
+                    if parsed >= 0.0:
+                        return parsed
+
         base_delay = self._retry_base_delay_seconds * (2**attempt)
         jitter = random.uniform(0.0, base_delay * 0.25)
         return base_delay + jitter
@@ -210,58 +232,49 @@ class GeminiRestClient:
         return status_code in _RETRYABLE_STATUS_CODES or 500 <= status_code <= 599
 
     @staticmethod
-    def _extract_candidate_text(payload: dict[str, Any]) -> str:
-        candidates = payload.get("candidates")
-        if not isinstance(candidates, list) or not candidates:
-            feedback = payload.get("promptFeedback")
-            raise GeminiAPIError(f"Gemini API returned no candidates: {feedback or 'no feedback'}")
-
-        candidate = candidates[0]
-        if not isinstance(candidate, dict):
-            raise GeminiAPIError("Gemini API candidate had an invalid shape")
-        finish_reason = candidate.get("finishReason")
-        if finish_reason not in (None, "STOP"):
-            raise GeminiAPIError(f"Gemini generation stopped with finish reason: {finish_reason}")
-
-        content = candidate.get("content")
-        if not isinstance(content, dict):
-            raise GeminiAPIError("Gemini candidate contained no content")
-        parts = content.get("parts")
-        if not isinstance(parts, list) or not parts:
-            raise GeminiAPIError("Gemini candidate contained no text parts")
-
-        text_parts = [part.get("text") for part in parts if isinstance(part, dict)]
-        text = "".join(part for part in text_parts if isinstance(part, str)).strip()
-        if not text:
-            raise GeminiAPIError("Gemini candidate contained no text")
-        return text
+    def _extract_message_text(payload: dict[str, Any]) -> str:
+        choices = payload.get("choices")
+        if not isinstance(choices, list) or not choices:
+            raise GroqAPIError("Groq API returned no choices")
+        choice = choices[0]
+        if not isinstance(choice, dict):
+            raise GroqAPIError("Groq API choice had an invalid shape")
+        finish_reason = choice.get("finish_reason")
+        if finish_reason not in (None, "stop"):
+            raise GroqAPIError(f"Groq generation stopped with finish reason: {finish_reason}")
+        message = choice.get("message")
+        if not isinstance(message, dict):
+            raise GroqAPIError("Groq API choice contained no message")
+        text = message.get("content")
+        if not isinstance(text, str) or not text.strip():
+            raise GroqAPIError("Groq API choice contained no text")
+        return text.strip()
 
     @staticmethod
     def _parse_structured_output(text: str) -> tuple[AnswerStatus, str]:
-        parsed = GeminiRestClient._parse_json_object(text)
+        parsed = GroqRestClient._parse_json_object(text)
         try:
             status = AnswerStatus(parsed["status"])
             answer = parsed["answer"]
         except (KeyError, ValueError) as exc:
-            raise GeminiAPIError("Gemini structured response contained an invalid status") from exc
-
+            raise GroqAPIError("Groq structured response contained an invalid status") from exc
         if not isinstance(answer, str) or not answer.strip():
-            raise GeminiAPIError("Gemini structured response contained an invalid answer")
+            raise GroqAPIError("Groq structured response contained an invalid answer")
         return status, answer.strip()
 
     @staticmethod
     def _parse_plan_output(text: str) -> tuple[AgentStrategy, str]:
-        parsed = GeminiRestClient._parse_json_object(text)
+        parsed = GroqRestClient._parse_json_object(text)
         try:
             strategy = AgentStrategy(parsed["strategy"])
             reason = parsed["reason"]
         except (KeyError, ValueError) as exc:
-            raise GeminiAPIError("Gemini planner returned an invalid strategy") from exc
+            raise GroqAPIError("Groq planner returned an invalid strategy") from exc
         if not isinstance(reason, str) or not reason.strip():
-            raise GeminiAPIError("Gemini planner returned an invalid reason")
+            raise GroqAPIError("Groq planner returned an invalid reason")
         reason = " ".join(reason.split())
         if len(reason) > 240:
-            raise GeminiAPIError("Gemini planner returned an excessively long reason")
+            raise GroqAPIError("Groq planner returned an excessively long reason")
         return strategy, reason
 
     @staticmethod
@@ -269,26 +282,34 @@ class GeminiRestClient:
         try:
             parsed = json.loads(text)
         except json.JSONDecodeError as exc:
-            raise GeminiAPIError("Gemini structured response was not valid JSON") from exc
+            raise GroqAPIError("Groq structured response was not valid JSON") from exc
         if not isinstance(parsed, dict):
-            raise GeminiAPIError("Gemini structured response was not an object")
+            raise GroqAPIError("Groq structured response was not an object")
         return parsed
 
     @staticmethod
     def _parse_usage(payload: dict[str, Any]) -> TokenUsage:
-        usage = payload.get("usageMetadata")
+        usage = payload.get("usage")
         if not isinstance(usage, dict):
             return TokenUsage()
 
-        def as_int(field: str) -> int:
-            value = usage.get(field, 0)
+        def as_int(container: dict[str, Any], field: str) -> int:
+            value = container.get(field, 0)
             return value if isinstance(value, int) and value >= 0 else 0
 
+        prompt_tokens = as_int(usage, "prompt_tokens")
+        completion_tokens = as_int(usage, "completion_tokens")
+        details = usage.get("completion_tokens_details")
+        reasoning_tokens = as_int(details, "reasoning_tokens") if isinstance(details, dict) else 0
+        visible_output_tokens = max(0, completion_tokens - reasoning_tokens)
+        total_tokens = as_int(usage, "total_tokens")
+        if total_tokens == 0:
+            total_tokens = prompt_tokens + completion_tokens
         return TokenUsage(
-            prompt_tokens=as_int("promptTokenCount"),
-            output_tokens=as_int("candidatesTokenCount"),
-            thinking_tokens=as_int("thoughtsTokenCount"),
-            total_tokens=as_int("totalTokenCount"),
+            prompt_tokens=prompt_tokens,
+            output_tokens=visible_output_tokens,
+            thinking_tokens=reasoning_tokens,
+            total_tokens=total_tokens,
         )
 
     @staticmethod
