@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     app_name: str = "Enterprise Knowledge Agent"
     app_environment: str = "development"
     log_level: str = "INFO"
+    app_request_timeout_seconds: float = 120.0
+    app_readiness_timeout_seconds: float = 5.0
     qdrant_url: str = "http://127.0.0.1:6333"
     qdrant_collection: str = "enterprise_knowledge_chunks"
     qdrant_timeout_seconds: float = 120.0

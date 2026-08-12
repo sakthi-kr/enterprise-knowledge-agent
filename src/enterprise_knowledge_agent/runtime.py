@@ -1,8 +1,11 @@
-"""Lazy construction of runtime RAG and agent components."""
+"""Lazy construction and lifecycle management of runtime RAG and agent components."""
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from contextlib import suppress
 from functools import lru_cache
+from threading import Lock
 
 from enterprise_knowledge_agent.agent import EnterpriseKnowledgeAgent
 from enterprise_knowledge_agent.config import get_settings
@@ -24,6 +27,21 @@ class ServiceConfigurationError(RuntimeError):
     """Raised when required runtime configuration is missing."""
 
 
+_RESOURCE_LOCK = Lock()
+_RESOURCE_CLOSERS: list[Callable[[], None]] = []
+
+
+def _register_resource_closers(*closers: Callable[[], None]) -> None:
+    with _RESOURCE_LOCK:
+        _RESOURCE_CLOSERS.extend(closers)
+
+
+def _close_constructed_resources(*closers: Callable[[], None]) -> None:
+    for closer in reversed(closers):
+        with suppress(Exception):
+            closer()
+
+
 def _build_retrieval_components() -> tuple[
     VectorRetriever,
     GraphRAGRetriever,
@@ -36,55 +54,69 @@ def _build_retrieval_components() -> tuple[
             "Gemini API key is not configured. Set EKA_GEMINI_API_KEY in .env."
         )
 
-    encoder = FastEmbedTextEncoder(
-        model_name=settings.embedding_model,
-        dimension=settings.embedding_dimension,
-        batch_size=settings.embedding_batch_size,
-    )
-    qdrant = QdrantStore(
-        base_url=settings.qdrant_url,
-        timeout_seconds=settings.qdrant_timeout_seconds,
-    )
-    qdrant.health()
-    dense = VectorRetriever(
-        store=qdrant,
-        encoder=encoder,
-        collection_name=settings.qdrant_collection,
-    )
-    graph_store = Neo4jGraphStore(
-        uri=settings.neo4j_uri,
-        user=settings.neo4j_user,
-        password=settings.neo4j_password,
-        database=settings.neo4j_database,
-    )
-    graph_store.verify_connectivity()
-    graph_retriever = GraphRAGRetriever(
-        dense_retriever=dense,
-        graph_store=graph_store,
-        dense_candidates=settings.graphrag_dense_candidates,
-        seed_documents=settings.graphrag_seed_documents,
-        seed_entities=settings.graphrag_seed_entities,
-        neighbor_entities=settings.graphrag_neighbor_entities,
-        graph_candidates=settings.graphrag_graph_candidates,
-        max_entity_document_count=settings.graphrag_max_entity_document_count,
-        min_cooccurrence_documents=settings.graphrag_min_cooccurrence_documents,
-        rrf_k=settings.graphrag_rrf_k,
-        dense_weight=settings.graphrag_dense_weight,
-        graph_weight=settings.graphrag_graph_weight,
-    )
-    language_model = GeminiRestClient(
-        api_key=settings.gemini_api_key,
-        model_name=settings.gemini_model,
-        base_url=settings.gemini_base_url,
-        timeout_seconds=settings.gemini_timeout_seconds,
-    )
-    context_builder = GraphContextBuilder(
-        max_sources=settings.rag_context_sources,
-        dense_sources=settings.rag_dense_context_sources,
-        graph_sources=settings.rag_graph_context_sources,
-        max_per_document=settings.rag_max_chunks_per_document,
-        max_context_characters=settings.rag_max_context_characters,
-    )
+    qdrant: QdrantStore | None = None
+    graph_store: Neo4jGraphStore | None = None
+    language_model: GeminiRestClient | None = None
+    try:
+        encoder = FastEmbedTextEncoder(
+            model_name=settings.embedding_model,
+            dimension=settings.embedding_dimension,
+            batch_size=settings.embedding_batch_size,
+        )
+        qdrant = QdrantStore(
+            base_url=settings.qdrant_url,
+            timeout_seconds=settings.qdrant_timeout_seconds,
+        )
+        qdrant.health()
+        dense = VectorRetriever(
+            store=qdrant,
+            encoder=encoder,
+            collection_name=settings.qdrant_collection,
+        )
+        graph_store = Neo4jGraphStore(
+            uri=settings.neo4j_uri,
+            user=settings.neo4j_user,
+            password=settings.neo4j_password,
+            database=settings.neo4j_database,
+        )
+        graph_store.verify_connectivity()
+        graph_retriever = GraphRAGRetriever(
+            dense_retriever=dense,
+            graph_store=graph_store,
+            dense_candidates=settings.graphrag_dense_candidates,
+            seed_documents=settings.graphrag_seed_documents,
+            seed_entities=settings.graphrag_seed_entities,
+            neighbor_entities=settings.graphrag_neighbor_entities,
+            graph_candidates=settings.graphrag_graph_candidates,
+            max_entity_document_count=settings.graphrag_max_entity_document_count,
+            min_cooccurrence_documents=settings.graphrag_min_cooccurrence_documents,
+            rrf_k=settings.graphrag_rrf_k,
+            dense_weight=settings.graphrag_dense_weight,
+            graph_weight=settings.graphrag_graph_weight,
+        )
+        language_model = GeminiRestClient(
+            api_key=settings.gemini_api_key,
+            model_name=settings.gemini_model,
+            base_url=settings.gemini_base_url,
+            timeout_seconds=settings.gemini_timeout_seconds,
+        )
+        context_builder = GraphContextBuilder(
+            max_sources=settings.rag_context_sources,
+            dense_sources=settings.rag_dense_context_sources,
+            graph_sources=settings.rag_graph_context_sources,
+            max_per_document=settings.rag_max_chunks_per_document,
+            max_context_characters=settings.rag_max_context_characters,
+        )
+    except Exception:
+        closers = [
+            resource.close
+            for resource in (qdrant, graph_store, language_model)
+            if resource is not None
+        ]
+        _close_constructed_resources(*closers)
+        raise
+
+    _register_resource_closers(qdrant.close, graph_store.close, language_model.close)
     return dense, graph_retriever, language_model, context_builder
 
 
@@ -136,3 +168,14 @@ def get_agent_service() -> EnterpriseKnowledgeAgent:
         max_tool_calls=settings.agent_max_tool_calls,
         tracer=tracer,
     )
+
+
+def close_runtime_services() -> None:
+    """Close external clients created by cached runtime services and clear their caches."""
+
+    get_agent_service.cache_clear()
+    get_answer_service.cache_clear()
+    with _RESOURCE_LOCK:
+        closers = list(_RESOURCE_CLOSERS)
+        _RESOURCE_CLOSERS.clear()
+    _close_constructed_resources(*closers)

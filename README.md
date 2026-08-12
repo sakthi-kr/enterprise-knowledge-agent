@@ -226,3 +226,26 @@ It measures answerability, citation/document quality, local semantic answer prox
 usage, estimated paid-tier token cost, and agent tool-routing behavior. These internal proxy
 metrics are not presented as EnterpriseRAG-Bench leaderboard scores. See
 `docs/answer-evaluation.md` for metric definitions and limitations.
+
+## Production-style API runtime
+
+The API keeps liveness separate from dependency readiness:
+
+- `GET /health` confirms that the process is alive without contacting external services.
+- `GET /ready` checks runtime configuration, the configured Qdrant collection, and Neo4j
+  connectivity without consuming language-model API quota.
+
+Responses include an `X-Request-ID` header. Request logs are structured JSON containing method, path,
+status, latency, and request ID without logging question bodies. API failures use a stable JSON error
+envelope, and the process-level request timeout is configurable with
+`EKA_APP_REQUEST_TIMEOUT_SECONDS`.
+
+Build the application container with:
+
+```bash
+docker build -t enterprise-knowledge-agent:local .
+```
+
+The image runs as a non-root user and uses a single Uvicorn worker so the local embedding model is not
+multiplied across worker processes. Runtime credentials are supplied through environment variables and
+are not baked into the image. See `docs/production-runtime.md` for the API and container behavior.
