@@ -15,7 +15,7 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 
 RUN python -m pip install --upgrade pip \
-    && python -m pip install ".[graph]" \
+    && python -m pip install ".[graph,ops]" \
     && mkdir -p /home/app/.cache \
     && chown -R app:app /home/app
 

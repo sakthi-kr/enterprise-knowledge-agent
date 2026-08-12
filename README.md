@@ -249,3 +249,19 @@ docker build -t enterprise-knowledge-agent:local .
 The image runs as a non-root user and uses a single Uvicorn worker so the local embedding model is not
 multiplied across worker processes. Runtime credentials are supplied through environment variables and
 are not baked into the image. See `docs/production-runtime.md` for the API and container behavior.
+
+## Run the local service stack
+
+The API, Qdrant, Neo4j, and MLflow can run together on one Docker Compose network. Existing Qdrant and
+Neo4j named volumes are reused, so the vector index and graph should be built before starting the full
+application stack.
+
+```bash
+docker compose up -d --build --wait --wait-timeout 180
+bash scripts/smoke_stack.sh
+```
+
+The API container uses Compose service addresses for Qdrant, Neo4j, and MLflow while credentials stay
+in the local `.env` file. Host ports are bound to `127.0.0.1` for local-only access. The smoke test
+checks Qdrant, Neo4j, MLflow, `/health`, and `/ready` without making an LLM API call. See
+`docs/local-stack.md` for service wiring, persistence, and shutdown behavior.
