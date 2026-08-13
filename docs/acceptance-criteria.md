@@ -19,13 +19,12 @@ The implementation is considered complete when the core capabilities below are p
 - [x] Package the API as a non-root container.
 - [x] Run the API, Qdrant, Neo4j, and MLflow through one Docker Compose stack with persistent volumes and a smoke test.
 - [x] Run linting, formatting checks, and tests in CI on pushes and pull requests.
-- [x] Commit measured retrieval, graph, and answer-evaluation summaries without committing raw benchmark content or secrets.
+- [x] Commit measured retrieval, graph, and answer-evaluation summaries while keeping gold answers, generated answer bodies, retrieved document text, and secrets out of committed answer-evaluation artifacts.
 - [x] Document measured regressions and limitations instead of presenting graph or agent complexity as an automatic improvement.
 
-## Final release audit
+## Final repository audit
 
-- [ ] Reproduce the documented quality checks from a clean checkout.
-- [ ] Validate documentation links and repository hygiene.
-- [ ] Confirm no credentials, local databases, generated corpus data, or machine-specific files are tracked.
-- [ ] Validate the Docker/Compose configuration and local smoke-test instructions from the release candidate.
-- [ ] Create the final release tag after the audit passes.
+- [x] Reproduce the documented quality checks from a clean checkout.
+- [x] Validate documentation links and repository hygiene.
+- [x] Confirm no credentials, local databases, generated corpus data, or machine-specific files are tracked.
+- [x] Validate the Docker/Compose configuration and local smoke-test instructions from a clean checkout.

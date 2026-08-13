@@ -219,7 +219,7 @@ python -m enterprise_knowledge_agent.answer_evaluation --provider groq \
   --max-context-characters 8000
 ```
 
-Provider/model runs are stored separately, successful pairs are resumable, and incomplete runs do not emit cross-system comparisons. Benchmark questions, gold answers, generated answers, and retrieved text are omitted from committed evaluation artifacts.
+Provider/model runs are stored separately, successful pairs are resumable, and incomplete runs do not emit cross-system comparisons. Benchmark questions, gold answers, generated answers, and retrieved text are omitted from committed answer-evaluation artifacts.
 
 ## Key design decisions
 
